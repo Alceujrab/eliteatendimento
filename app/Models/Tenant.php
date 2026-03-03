@@ -21,6 +21,14 @@ class Tenant extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Use slug para route model binding (URLs amigáveis no Filament).
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

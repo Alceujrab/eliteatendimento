@@ -1,12 +1,38 @@
 <IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
     RewriteEngine On
-    RewriteBase /
 
-    # Se é um arquivo ou diretório real dentro de public/, servir diretamente
-    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
-    RewriteRule ^(.+)$ public/$1 [L]
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Todo o resto vai para o front controller do Laravel
-    RewriteRule ^(.*)$ public/index.php [L,QSA]
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Forçar HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Servir arquivos estáticos de public/ (CSS, JS, imagens, fontes, etc.)
+    RewriteCond %{REQUEST_URI} ^/build/ [OR]
+    RewriteCond %{REQUEST_URI} ^/vendor/ [OR]
+    RewriteCond %{REQUEST_URI} ^/storage/ [OR]
+    RewriteCond %{REQUEST_URI} ^/favicon\.ico$ [OR]
+    RewriteCond %{REQUEST_URI} ^/robots\.txt$
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Remover barra final
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Tudo mais vai direto pro front controller do Laravel
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.php/$1 [L,QSA]
 </IfModule>
