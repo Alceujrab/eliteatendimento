@@ -1,6 +1,12 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /
 
-    # Redirecionar tudo para a pasta public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Se é um arquivo ou diretório real dentro de public/, servir diretamente
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
+    RewriteRule ^(.+)$ public/$1 [L]
+
+    # Todo o resto vai para o front controller do Laravel
+    RewriteRule ^(.*)$ public/index.php [L,QSA]
 </IfModule>
