@@ -1,14 +1,32 @@
 <?php
 
 /**
- * Laravel - Proxy para cPanel Shared Hosting
+ * Laravel - Front Controller para cPanel Shared Hosting
  *
- * Em hospedagem cPanel onde o Document Root aponta para a raiz do projeto
- * (e não para public/), este arquivo simplesmente carrega o front controller
- * real que está em public/index.php.
- *
- * O __DIR__ dentro de public/index.php continuará resolvendo para public/,
- * então todos os caminhos relativos funcionam normalmente.
+ * Quando o Document Root do cPanel aponta para a raiz do projeto
+ * (não para public/), este arquivo faz o bootstrap completo
+ * do Laravel, sem depender de require/proxy para public/index.php.
  */
 
-require __DIR__.'/public/index.php';
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+// Determinar se a aplicação está em modo de manutenção...
+if (file_exists($maintenance = __DIR__.'/storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Registrar o autoloader do Composer...
+require __DIR__.'/vendor/autoload.php';
+
+// Inicializar o Laravel...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+// Informar ao Laravel que a pasta public está em public/
+$app->usePublicPath(__DIR__.'/public');
+
+// Processar a requisição...
+$app->handleRequest(Request::capture());
