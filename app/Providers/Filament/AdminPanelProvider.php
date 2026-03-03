@@ -32,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('Elite Atendimento')
             ->favicon(asset('favicon.ico'))
-            ->tenant(Tenant::class, ownershipRelationship: 'tenant')
+            ->tenant(Tenant::class, ownershipRelationship: 'tenant', slugAttribute: 'slug')
             ->colors([
                 'primary' => Color::Blue,
                 'danger' => Color::Rose,
