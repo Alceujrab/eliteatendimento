@@ -185,7 +185,7 @@ class DatabaseSeeder extends Seeder
                 'cpf'       => $doc,
                 'city'      => $city,
                 'state'     => $state,
-                'tags'      => json_encode(fake()->randomElements(['cliente', 'prospect', 'financiamento', 'troca', 'pcd', 'empresa'], rand(1, 3))),
+                'tags'      => json_encode(array_slice(collect(['cliente', 'prospect', 'financiamento', 'troca', 'pcd', 'empresa'])->shuffle()->all(), 0, rand(1, 3))),
             ]);
         }
 
