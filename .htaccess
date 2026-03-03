@@ -17,22 +17,21 @@
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Servir arquivos estáticos de public/ (CSS, JS, imagens, fontes, etc.)
-    RewriteCond %{REQUEST_URI} ^/build/ [OR]
-    RewriteCond %{REQUEST_URI} ^/vendor/ [OR]
-    RewriteCond %{REQUEST_URI} ^/storage/ [OR]
-    RewriteCond %{REQUEST_URI} ^/favicon\.ico$ [OR]
-    RewriteCond %{REQUEST_URI} ^/robots\.txt$
+    # Servir arquivos estáticos que existem em public/
+    # (CSS, JS, imagens, fontes, favicon, etc.)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
     RewriteRule ^(.*)$ public/$1 [L]
 
-    # Remover barra final
+    # Remover barra final (se não for diretório)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Tudo mais vai direto pro front controller do Laravel
-    RewriteCond %{REQUEST_FILENAME} !-f
+    # Enviar tudo para o front controller (index.php na raiz)
+    # O REQUEST_URI é preservado integralmente para o Laravel
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/index.php/$1 [L,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
 </IfModule>
