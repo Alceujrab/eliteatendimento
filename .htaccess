@@ -4,6 +4,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -18,23 +19,22 @@
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Servir arquivos estáticos que existem em public/
-    # (CSS, JS, imagens, fontes, favicon, etc.)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteCond %{DOCUMENT_ROOT}/public/%{REQUEST_URI} -f
+    RewriteRule ^(.+)$ /public/$1 [L]
 
     # Remover barra final (se não for diretório)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Enviar tudo para o front controller (index.php na raiz)
-    # O REQUEST_URI é preservado integralmente para o Laravel
+    # Enviar TUDO para o front controller na raiz
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    RewriteRule ^(.*)$ /index.php [L]
 </IfModule>
 
-# Se mod_rewrite falhar, usar ErrorDocument como fallback
-ErrorDocument 404 /index.php
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 /index.php
+</IfModule>
