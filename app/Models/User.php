@@ -33,6 +33,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'tenant_id' => 'integer',
             'is_active' => 'boolean',
             'is_online' => 'boolean',
             'last_seen_at' => 'datetime',
@@ -80,7 +81,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->tenant_id === $tenant->id;
+        return (int) $this->tenant_id === (int) $tenant->id;
     }
 
     /* ── Helpers ── */

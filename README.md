@@ -57,3 +57,48 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Incidente em produção (04/03/2026)
+
+### Sintoma
+
+- Localmente o login funcionava normalmente.
+- No servidor remoto, após autenticar, o usuário era redirecionado e recebia `404` em `/admin/elite-seminovos`.
+
+### Erros identificados
+
+- `404` no acesso pós-login às rotas de tenant do Filament (`/admin/{tenant}`).
+- Ambiente do servidor web rodando versão de PHP incompatível com dependências em produção (antes da correção).
+- Validação de acesso ao tenant sensível a tipo (`tenant_id` vs `tenant->id`), podendo falhar em produção e resultar em `404`.
+
+### Causa raiz
+
+Combinação de fatores de ambiente e regra de acesso multi-tenant:
+
+1. **PHP no webserver** estava abaixo da versão exigida pelas dependências instaladas.
+2. A checagem de acesso ao tenant em `User::canAccessTenant()` usava comparação estrita de tipo, o que pode negar o tenant mesmo com mesmo valor, causando `404` na rota do painel.
+
+### Correções aplicadas
+
+1. Atualização do PHP do servidor para `8.4`.
+2. Regeração de caches de produção:
+	- `php artisan optimize:clear`
+	- `php artisan config:cache`
+	- `php artisan route:cache`
+	- `php artisan view:cache`
+3. Ajuste no modelo de usuário para robustez no tenancy:
+	- Arquivo: `app/Models/User.php`
+	- Adicionado cast: `'tenant_id' => 'integer'`
+	- Ajuste em `canAccessTenant()` para comparar IDs como inteiro.
+4. Limpeza de arquivos temporários de debug no servidor.
+
+### Resultado
+
+- Login e redirecionamento para o painel tenant voltaram a funcionar em produção.
+
+### Checklist de deploy (recomendado)
+
+- Confirmar versão de PHP do **webserver** (não só CLI).
+- Garantir `APP_DEBUG=false` em produção.
+- Regerar caches após deploy.
+- Validar login + redirecionamento para `/admin/{tenant}`.
