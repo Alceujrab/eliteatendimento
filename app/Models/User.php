@@ -20,7 +20,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     protected $fillable = [
         'name', 'email', 'password', 'tenant_id', 'role', 'phone',
-        'avatar', 'is_active', 'is_online', 'max_concurrent_chats', 'last_seen_at',
+        'avatar', 'is_active', 'is_online', 'max_concurrent_chats', 'working_hours', 'last_seen_at',
     ];
 
     protected $hidden = [
@@ -36,6 +36,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             'tenant_id' => 'integer',
             'is_active' => 'boolean',
             'is_online' => 'boolean',
+            'working_hours' => 'array',
             'last_seen_at' => 'datetime',
         ];
     }

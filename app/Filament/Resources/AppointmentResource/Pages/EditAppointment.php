@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Services\AppointmentAvailabilityService;
 use App\Services\AppointmentFlowService;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,7 @@ class EditAppointment extends EditRecord
         $this->oldStatus = (string) $this->record->status;
         $data['duration_minutes'] = (int) ($data['duration_minutes'] ?? 60);
 
+        $this->ensureWithinAvailability($data);
         $this->ensureNoConflict($data);
 
         return $data;
@@ -56,6 +58,24 @@ class EditAppointment extends EditRecord
         if ($hasConflict) {
             throw ValidationException::withMessages([
                 'scheduled_at' => 'Já existe outro agendamento no mesmo horário para este responsável.',
+            ]);
+        }
+    }
+
+    private function ensureWithinAvailability(array $data): void
+    {
+        $tenant = filament()->getTenant();
+
+        $message = app(AppointmentAvailabilityService::class)->assertWithinAvailability(
+            tenant: $tenant,
+            userId: (int) $data['user_id'],
+            scheduledAt: (string) $data['scheduled_at'],
+            durationMinutes: (int) ($data['duration_minutes'] ?? 60),
+        );
+
+        if ($message) {
+            throw ValidationException::withMessages([
+                'scheduled_at' => $message,
             ]);
         }
     }

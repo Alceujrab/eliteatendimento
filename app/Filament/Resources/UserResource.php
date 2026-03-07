@@ -71,6 +71,95 @@ class UserResource extends Resource
                         ->label('Ativo')
                         ->default(true),
                 ]),
+            Schemas\Components\Section::make('Disponibilidade da Agenda')
+                ->description('Define os horários em que este usuário pode receber agendamentos.')
+                ->columns(3)
+                ->collapsible()
+                ->schema([
+                    Forms\Components\Toggle::make('working_hours.mon.enabled')
+                        ->label('Segunda ativa')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.mon.start')
+                        ->label('Segunda início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.mon.end')
+                        ->label('Segunda fim')
+                        ->seconds(false)
+                        ->default('18:00'),
+
+                    Forms\Components\Toggle::make('working_hours.tue.enabled')
+                        ->label('Terça ativa')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.tue.start')
+                        ->label('Terça início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.tue.end')
+                        ->label('Terça fim')
+                        ->seconds(false)
+                        ->default('18:00'),
+
+                    Forms\Components\Toggle::make('working_hours.wed.enabled')
+                        ->label('Quarta ativa')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.wed.start')
+                        ->label('Quarta início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.wed.end')
+                        ->label('Quarta fim')
+                        ->seconds(false)
+                        ->default('18:00'),
+
+                    Forms\Components\Toggle::make('working_hours.thu.enabled')
+                        ->label('Quinta ativa')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.thu.start')
+                        ->label('Quinta início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.thu.end')
+                        ->label('Quinta fim')
+                        ->seconds(false)
+                        ->default('18:00'),
+
+                    Forms\Components\Toggle::make('working_hours.fri.enabled')
+                        ->label('Sexta ativa')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.fri.start')
+                        ->label('Sexta início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.fri.end')
+                        ->label('Sexta fim')
+                        ->seconds(false)
+                        ->default('18:00'),
+
+                    Forms\Components\Toggle::make('working_hours.sat.enabled')
+                        ->label('Sábado ativo')
+                        ->default(true),
+                    Forms\Components\TimePicker::make('working_hours.sat.start')
+                        ->label('Sábado início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.sat.end')
+                        ->label('Sábado fim')
+                        ->seconds(false)
+                        ->default('12:00'),
+
+                    Forms\Components\Toggle::make('working_hours.sun.enabled')
+                        ->label('Domingo ativo')
+                        ->default(false),
+                    Forms\Components\TimePicker::make('working_hours.sun.start')
+                        ->label('Domingo início')
+                        ->seconds(false)
+                        ->default('08:00'),
+                    Forms\Components\TimePicker::make('working_hours.sun.end')
+                        ->label('Domingo fim')
+                        ->seconds(false)
+                        ->default('12:00'),
+                ]),
         ]);
     }
 
