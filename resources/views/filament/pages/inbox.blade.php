@@ -1,4 +1,34 @@
 <x-filament-panels::page :full-height="true">
+    <style>
+        .inbox-ui svg {
+            width: 1rem;
+            height: 1rem;
+            max-width: 1rem;
+            max-height: 1rem;
+            flex-shrink: 0;
+        }
+
+        .inbox-ui .inbox-empty-state svg {
+            width: 3rem;
+            height: 3rem;
+            max-width: 3rem;
+            max-height: 3rem;
+        }
+
+        .inbox-ui .inbox-main-placeholder svg {
+            width: 12rem;
+            height: 12rem;
+            max-width: 12rem;
+            max-height: 12rem;
+        }
+
+        .inbox-ui .inbox-status-check {
+            width: 0.875rem;
+            height: 0.75rem;
+            max-width: 0.875rem;
+            max-height: 0.75rem;
+        }
+    </style>
     <div
         x-data="{
             inboxHeight: 'auto',
@@ -25,7 +55,7 @@
         }"
         x-on:message-sent.window="scrollToBottom()"
         :style="{ height: inboxHeight }"
-        class="flex rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm"
+        class="inbox-ui flex rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm"
         wire:poll.5s="refreshInbox"
     >
         {{-- ═══════ LEFT SIDEBAR — CONVERSATION LIST ═══════ --}}
@@ -184,7 +214,7 @@
                         </div>
                     </button>
                 @empty
-                    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <div class="inbox-empty-state flex flex-col items-center justify-center py-12 text-gray-400">
                         <x-heroicon-o-chat-bubble-left-right class="w-12 h-12 mb-3" />
                         <p class="text-sm">Nenhuma conversa encontrada</p>
                     </div>
@@ -356,13 +386,13 @@
                                             @if ($msg->isOutbound())
                                                 @switch($msg->status)
                                                     @case('read')
-                                                        <svg class="w-4 h-3 text-blue-500" fill="currentColor" viewBox="0 0 16 11"><path d="M11.07 0L5.97 5.1 4.5 3.63 3.07 5.1l2.9 2.9 6.53-6.53L11.07 0zM8.07 0L2.97 5.1 1.5 3.63.07 5.1l2.9 2.9L9.5 1.47 8.07 0z"/></svg>
+                                                        <svg class="inbox-status-check text-blue-500" fill="currentColor" viewBox="0 0 16 11"><path d="M11.07 0L5.97 5.1 4.5 3.63 3.07 5.1l2.9 2.9 6.53-6.53L11.07 0zM8.07 0L2.97 5.1 1.5 3.63.07 5.1l2.9 2.9L9.5 1.47 8.07 0z"/></svg>
                                                         @break
                                                     @case('delivered')
-                                                        <svg class="w-4 h-3 text-gray-400" fill="currentColor" viewBox="0 0 16 11"><path d="M11.07 0L5.97 5.1 4.5 3.63 3.07 5.1l2.9 2.9 6.53-6.53L11.07 0zM8.07 0L2.97 5.1 1.5 3.63.07 5.1l2.9 2.9L9.5 1.47 8.07 0z"/></svg>
+                                                        <svg class="inbox-status-check text-gray-400" fill="currentColor" viewBox="0 0 16 11"><path d="M11.07 0L5.97 5.1 4.5 3.63 3.07 5.1l2.9 2.9 6.53-6.53L11.07 0zM8.07 0L2.97 5.1 1.5 3.63.07 5.1l2.9 2.9L9.5 1.47 8.07 0z"/></svg>
                                                         @break
                                                     @case('sent')
-                                                        <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 12 11"><path d="M10.07 0L4.97 5.1 3.5 3.63 2.07 5.1l2.9 2.9 6.53-6.53L10.07 0z"/></svg>
+                                                        <svg class="inbox-status-check text-gray-400" fill="currentColor" viewBox="0 0 12 11"><path d="M10.07 0L4.97 5.1 3.5 3.63 2.07 5.1l2.9 2.9 6.53-6.53L10.07 0z"/></svg>
                                                         @break
                                                     @case('failed')
                                                         <x-heroicon-m-exclamation-circle class="w-3 h-3 text-red-500" />
@@ -375,7 +405,7 @@
                             @endforeach
 
                             @if ($msgs->isEmpty())
-                                <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                                <div class="inbox-empty-state flex flex-col items-center justify-center h-full text-gray-400">
                                     <x-heroicon-o-chat-bubble-left-ellipsis class="w-16 h-16 mb-3 opacity-30" />
                                     <p class="text-sm">Nenhuma mensagem ainda</p>
                                     <p class="text-xs mt-1">Envie a primeira mensagem</p>
@@ -593,7 +623,7 @@
             </div>
         @else
             {{-- No conversation selected --}}
-            <div class="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-400">
+            <div class="inbox-main-placeholder flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-400">
                 <div class="text-center">
                     <svg class="w-48 h-48 mx-auto mb-6 opacity-20" viewBox="0 0 200 200" fill="none">
                         <circle cx="100" cy="100" r="80" stroke="currentColor" stroke-width="2" />
