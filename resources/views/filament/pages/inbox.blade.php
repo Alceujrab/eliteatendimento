@@ -79,13 +79,13 @@
         wire:poll.5s="refreshInbox"
     >
         {{-- ═══════ LEFT SIDEBAR — CONVERSATION LIST ═══════ --}}
-        <div class="w-[380px] min-w-[320px] flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900">
+        <div class="w-[360px] min-w-[320px] flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900">
             {{-- Header --}}
-            <div class="inbox-sticky-header px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-gray-800/95">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-lg font-bold text-gray-800 dark:text-white">Conversas</h2>
+            <div class="inbox-sticky-header px-3.5 py-2.5 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-gray-800/95">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h2 class="text-base font-semibold text-gray-800 dark:text-white">Conversas</h2>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">
                             {{ $this->getConversations()->count() }} conversas
                         </span>
                         <button
@@ -98,7 +98,7 @@
                     </div>
                 </div>
 
-                <div x-show="shortcutsOpen" x-transition class="mb-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2.5 py-2 text-[11px] text-gray-600 dark:text-gray-300">
+                <div x-show="shortcutsOpen" x-transition class="mb-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2.5 py-2 text-[11px] text-gray-600 dark:text-gray-300">
                     <div class="flex flex-wrap gap-x-3 gap-y-1">
                         <span><b>/</b> buscar</span>
                         <span><b>Alt+1</b> Novo</span>
@@ -109,7 +109,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
                     <button
                         wire:click="$set('filterStatus', 'new')"
                         class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'new' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
@@ -140,7 +140,7 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
                     <div class="rounded-lg bg-red-50 dark:bg-red-900/20 px-2 py-1.5 border border-red-100 dark:border-red-900/30">
                         <p class="text-[10px] text-red-600 dark:text-red-300">SLA 1ª resposta (5 min)</p>
                         <p class="text-sm font-semibold text-red-700 dark:text-red-200">{{ $this->slaStats['first_response_overdue'] ?? 0 }}</p>
@@ -152,7 +152,7 @@
                 </div>
 
                 {{-- Search --}}
-                <div class="relative mb-3">
+                <div class="relative mb-2.5">
                     <x-heroicon-m-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         x-ref="searchInput"
@@ -163,7 +163,7 @@
                     />
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
                     <div class="rounded-lg bg-gray-100 dark:bg-gray-700 px-2 py-1.5">
                         <p class="text-[10px] text-gray-500">Ativas</p>
                         <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->inboxStats['active'] ?? 0 }}</p>
@@ -214,7 +214,7 @@
                     @endforeach
                 </div>
 
-                <div class="grid grid-cols-1 gap-2 mt-3">
+                <div class="grid grid-cols-1 gap-1.5 mt-2.5">
                     <select
                         wire:model.live="filterAgent"
                         class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1.5"
@@ -249,9 +249,9 @@
                 @forelse ($this->getConversations() as $conversation)
                     <button
                         wire:click="selectConversation({{ $conversation->id }})"
-                        class="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 dark:border-gray-800
+                        class="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left transition-colors border-b border-gray-100 dark:border-gray-800
                             {{ $activeConversationId === $conversation->id
-                                ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-500'
+                                ? 'bg-primary-50 dark:bg-primary-900/20 border-l-[3px] border-l-primary-500'
                                 : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-l-4 border-l-transparent' }}"
                     >
                         {{-- Avatar --}}
@@ -259,7 +259,7 @@
                             <img
                                 src="{{ $conversation->contact->avatar_url }}"
                                 alt="{{ $conversation->contact->name }}"
-                                class="w-12 h-12 rounded-full object-cover"
+                                class="w-11 h-11 rounded-full object-cover"
                             />
                             {{-- Channel badge --}}
                             <span
@@ -293,16 +293,16 @@
                         {{-- Content --}}
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
-                                <span class="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                                <span class="font-semibold text-[13px] text-gray-900 dark:text-white truncate leading-5">
                                     {{ $conversation->contact->name }}
                                 </span>
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap ml-2">
+                                <span class="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap ml-2">
                                     {{ $conversation->last_message_at?->diffForHumans(short: true) ?? '' }}
                                 </span>
                             </div>
 
                             <div class="flex items-center justify-between mt-0.5">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
+                                <p class="text-[12px] leading-4 text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
                                     {{ $conversation->last_message_preview ?? 'Sem mensagens' }}
                                 </p>
                                 <div class="flex items-center gap-1.5 ml-1">
@@ -317,7 +317,7 @@
                             {{-- Status + Agent --}}
                             <div class="flex items-center gap-2 mt-1">
                                 @php $badge = $conversation->status_badge; @endphp
-                                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] leading-none font-medium rounded
                                     {{ match($badge['color']) {
                                         'blue' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                                         'green' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -327,7 +327,7 @@
                                     {{ $badge['label'] }}
                                 </span>
                                 @if ($conversation->assignedUser)
-                                    <span class="text-[10px] text-gray-400 dark:text-gray-500 truncate">
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500 truncate leading-none">
                                         {{ $conversation->assignedUser->name }}
                                     </span>
                                 @endif
@@ -351,18 +351,18 @@
             @endphp
             <div class="flex-1 flex flex-col min-w-0">
                 {{-- Chat header --}}
-                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800">
+                <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800">
                     <div class="flex items-center gap-3 min-w-0">
                         <img
                             src="{{ $conv->contact->avatar_url }}"
                             alt="{{ $conv->contact->name }}"
-                            class="w-10 h-10 rounded-full object-cover"
+                            class="w-9 h-9 rounded-full object-cover"
                         />
                         <div class="min-w-0">
-                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-[13px] truncate leading-5">
                                 {{ $conv->contact->name }}
                             </h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-4">
                                 {{ $conv->contact->phone ?? $conv->contact->email ?? '' }}
                                 <span class="mx-1">&middot;</span>
                                 <span style="color: {{ $conv->channel->color }}">{{ $conv->channel->name }}</span>
@@ -447,7 +447,7 @@
                         {{-- Messages scroll --}}
                         <div
                             id="messages-container"
-                            class="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-[#efeae2] dark:bg-gray-950"
+                            class="flex-1 overflow-y-auto px-3.5 py-3 space-y-0.5 bg-[#efeae2] dark:bg-gray-950"
                             x-init="$el.scrollTop = $el.scrollHeight"
                         >
                             @php $lastDate = null; @endphp
@@ -455,8 +455,8 @@
                                 {{-- Date separator --}}
                                 @if ($lastDate !== $msg->created_at->format('Y-m-d'))
                                     @php $lastDate = $msg->created_at->format('Y-m-d'); @endphp
-                                    <div class="flex justify-center my-3">
-                                        <span class="px-3 py-1 rounded-lg bg-white/80 dark:bg-gray-700/80 text-xs text-gray-600 dark:text-gray-300 shadow-sm">
+                                    <div class="flex justify-center my-2.5">
+                                        <span class="px-2.5 py-1 rounded-lg bg-white/80 dark:bg-gray-700/80 text-[11px] text-gray-600 dark:text-gray-300 shadow-sm">
                                             {{ $msg->created_at->translatedFormat('d \\d\\e F') }}
                                         </span>
                                     </div>
@@ -491,14 +491,14 @@
 
                                 {{-- Chat bubble --}}
                                 <div class="flex {{ $msg->isOutbound() ? 'justify-end' : 'justify-start' }} mb-0.5">
-                                    <div class="max-w-[75%] px-3 py-2 rounded-2xl shadow-sm relative
+                                    <div class="max-w-[72%] px-3 py-1.5 rounded-2xl shadow-sm relative
                                         {{ $msg->isOutbound()
                                             ? 'bg-[#d9fdd3] dark:bg-green-900/40 rounded-tr-sm'
                                             : 'bg-white dark:bg-gray-700 rounded-tl-sm' }}
                                     ">
                                         {{-- Sender name for inbound --}}
                                         @if ($msg->isInbound())
-                                            <p class="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-0.5">
+                                            <p class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 mb-0.5 leading-4">
                                                 {{ $msg->sender_name }}
                                             </p>
                                         @endif
@@ -527,11 +527,11 @@
                                         @endif
 
                                         @if ($msg->body)
-                                            <p class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">{{ $msg->body }}</p>
+                                            <p class="text-[13px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-5">{{ $msg->body }}</p>
                                         @endif
 
                                         {{-- Time + status --}}
-                                        <div class="flex items-center justify-end gap-1 mt-0.5">
+                                        <div class="flex items-center justify-end gap-1 mt-1">
                                             <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ $msg->formatted_time }}</span>
                                             @if ($msg->isOutbound())
                                                 @switch($msg->status)
@@ -584,7 +584,7 @@
                         @endif
 
                         {{-- Message input --}}
-                        <div class="border-t border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-3">
+                        <div class="border-t border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-4 py-2.5">
                             @if ($isInternalNote)
                                 <div class="flex items-center gap-2 mb-2 px-2 py-1 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 text-xs">
                                     <x-heroicon-m-lock-closed class="w-3.5 h-3.5" />
@@ -620,7 +620,7 @@
                                         x-on:keydown.ctrl.enter.prevent="$wire.sendMessage()"
                                         placeholder="{{ $isInternalNote ? 'Escreva uma nota interna...' : 'Digite uma mensagem...' }}"
                                         rows="1"
-                                        class="w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400"
+                                        class="w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3.5 py-2.5 text-[13px] leading-5 focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400"
                                         x-data="{ resize() { $el.style.height = '40px'; $el.style.height = Math.min($el.scrollHeight, 120) + 'px'; } }"
                                         x-on:input="resize()"
                                         x-init="resize()"
@@ -646,7 +646,7 @@
 
                     {{-- ═══════ RIGHT SIDEBAR — CONTACT INFO ═══════ --}}
                     @if ($showContactInfo)
-                        <div class="w-[300px] border-l border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 overflow-y-auto">
+                        <div class="w-[280px] border-l border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 overflow-y-auto">
                             <div class="p-4">
                                 {{-- Close --}}
                                 <div class="flex items-center justify-between mb-4">
