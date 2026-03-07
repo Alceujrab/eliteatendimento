@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
+use App\Filament\Resources\AppointmentResource\Widgets\MonthlyGoalsProgress;
 use App\Filament\Resources\AppointmentResource\Widgets\TopSellersRanking;
 use App\Services\AppointmentsSellerMetricsService;
 use Filament\Actions;
@@ -17,6 +18,7 @@ class ListAppointments extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
+            MonthlyGoalsProgress::class,
             TopSellersRanking::class,
         ];
     }
