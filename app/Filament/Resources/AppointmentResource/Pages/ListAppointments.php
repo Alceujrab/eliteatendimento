@@ -12,6 +12,7 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ListAppointments extends ListRecords
 {
@@ -32,7 +33,7 @@ class ListAppointments extends ListRecords
                 ->label('Metas da Agenda')
                 ->icon('heroicon-o-adjustments-horizontal')
                 ->color('primary')
-                ->visible(fn (): bool => auth()->check() && auth()->user()->isGestor())
+                ->visible(fn (): bool => Auth::user()?->isGestor() ?? false)
                 ->fillForm(function (): array {
                     $tenant = filament()->getTenant();
                     $settings = is_array($tenant?->settings) ? $tenant->settings : [];
