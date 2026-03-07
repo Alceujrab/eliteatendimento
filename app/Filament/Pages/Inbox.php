@@ -10,6 +10,7 @@ use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 
@@ -40,6 +41,7 @@ class Inbox extends Page
     public string $messageText = '';
     public string $searchQuery = '';
     public string $filterStatus = 'active'; // active, mine, unassigned, all
+    public string $filterChannel = 'all'; // all, whatsapp, instagram, facebook
     public bool $showQuickReplies = false;
     public bool $showContactInfo = false;
     public bool $isInternalNote = false;
@@ -64,7 +66,7 @@ class Inbox extends Page
         // Filters
         match ($this->filterStatus) {
             'active' => $query->whereIn('status', ['new', 'open', 'pending']),
-            'mine' => $query->where('assigned_to', auth()->id())->whereIn('status', ['new', 'open', 'pending']),
+            'mine' => $query->where('assigned_to', Auth::id())->whereIn('status', ['new', 'open', 'pending']),
             'unassigned' => $query->whereNull('assigned_to')->whereIn('status', ['new', 'open', 'pending']),
             'resolved' => $query->where('status', 'resolved'),
             default => $query,
@@ -81,6 +83,14 @@ class Inbox extends Page
                   });
             });
         }
+
+        // Channel filter (omnichannel)
+        match ($this->filterChannel) {
+            'whatsapp' => $query->whereHas('channel', fn ($q) => $q->whereIn('type', ['whatsapp_meta', 'whatsapp_evolution'])),
+            'instagram' => $query->whereHas('channel', fn ($q) => $q->where('type', 'instagram')),
+            'facebook' => $query->whereHas('channel', fn ($q) => $q->where('type', 'facebook')),
+            default => $query,
+        };
 
         return $query->orderByDesc('last_message_at')->limit(100)->get();
     }
@@ -112,7 +122,7 @@ class Inbox extends Page
         return QuickReply::where('tenant_id', $tenant->id)
             ->where(function ($q) {
                 $q->where('is_global', true)
-                  ->orWhere('user_id', auth()->id());
+                                    ->orWhere('user_id', Auth::id());
             })
             ->orderBy('title')
             ->get();
@@ -140,7 +150,7 @@ class Inbox extends Page
         if (!$conversation) return;
 
         $text = $this->messageText;
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         // --- Dispatch via external channel if applicable ---
         $message = null;
@@ -200,7 +210,7 @@ class Inbox extends Page
 
         Conversation::where('id', $this->activeConversationId)
             ->update([
-                'assigned_to' => auth()->id(),
+                'assigned_to' => Auth::id(),
                 'status' => 'open',
             ]);
     }

@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('vehicles:sync-feed')->everyFifteenMinutes();
 Schedule::command('appointments:send-reminders')->everyFiveMinutes();
+Schedule::command('campaigns:dispatch')->everyMinute();

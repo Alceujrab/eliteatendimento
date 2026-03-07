@@ -72,6 +72,25 @@
                         </button>
                     @endforeach
                 </div>
+
+                <div class="flex gap-1 mt-2">
+                    @foreach ([
+                        'all' => 'Omnichannel',
+                        'whatsapp' => 'WhatsApp',
+                        'instagram' => 'Instagram',
+                        'facebook' => 'Facebook',
+                    ] as $val => $label)
+                        <button
+                            wire:click="$set('filterChannel', '{{ $val }}')"
+                            class="px-2.5 py-1 text-[11px] font-medium rounded-full transition-colors
+                                {{ $filterChannel === $val
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600' }}"
+                        >
+                            {{ $label }}
+                        </button>
+                    @endforeach
+                </div>
             </div>
 
             {{-- Conversation list --}}

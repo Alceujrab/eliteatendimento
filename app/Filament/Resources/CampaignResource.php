@@ -4,7 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CampaignResource\Pages;
 use App\Models\Campaign;
+use App\Services\WhatsAppCampaignService;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -177,6 +179,74 @@ class CampaignResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Actions\Action::make('startCampaign')
+                    ->label('Iniciar')
+                    ->icon('heroicon-o-play')
+                    ->color('success')
+                    ->visible(fn (Campaign $record): bool => in_array($record->status, ['draft', 'scheduled', 'paused']))
+                    ->action(function (Campaign $record, WhatsAppCampaignService $service): void {
+                        $result = $service->startCampaign($record);
+
+                        Notification::make()
+                            ->title($result['ok'] ? 'Campanha iniciada' : 'Não foi possível iniciar')
+                            ->body($result['message'])
+                            ->{$result['ok'] ? 'success' : 'danger'}()
+                            ->send();
+                    }),
+                Actions\Action::make('pauseCampaign')
+                    ->label('Pausar')
+                    ->icon('heroicon-o-pause')
+                    ->color('warning')
+                    ->visible(fn (Campaign $record): bool => $record->status === 'running')
+                    ->action(function (Campaign $record, WhatsAppCampaignService $service): void {
+                        $service->pauseCampaign($record);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Campanha pausada')
+                            ->send();
+                    }),
+                Actions\Action::make('resumeCampaign')
+                    ->label('Retomar')
+                    ->icon('heroicon-o-play-circle')
+                    ->color('info')
+                    ->visible(fn (Campaign $record): bool => in_array($record->status, ['paused', 'scheduled']))
+                    ->action(function (Campaign $record, WhatsAppCampaignService $service): void {
+                        $service->resumeCampaign($record);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Campanha retomada')
+                            ->send();
+                    }),
+                Actions\Action::make('cancelCampaign')
+                    ->label('Cancelar')
+                    ->icon('heroicon-o-stop-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (Campaign $record): bool => ! in_array($record->status, ['cancelled', 'completed']))
+                    ->action(function (Campaign $record, WhatsAppCampaignService $service): void {
+                        $service->cancelCampaign($record);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Campanha cancelada')
+                            ->send();
+                    }),
+                Actions\Action::make('processNow')
+                    ->label('Processar agora')
+                    ->icon('heroicon-o-bolt')
+                    ->color('gray')
+                    ->visible(fn (Campaign $record): bool => $record->status === 'running')
+                    ->action(function (Campaign $record, WhatsAppCampaignService $service): void {
+                        $result = $service->processRunningCampaigns((int) $record->id, 40);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Processamento executado')
+                            ->body("Enviadas: {$result['sent']} | Falhas: {$result['failed']}")
+                            ->send();
+                    }),
                 Actions\EditAction::make(),
             ])
             ->bulkActions([
