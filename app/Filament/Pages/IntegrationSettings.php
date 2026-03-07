@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\IntegrationSetting;
+use App\Services\VehicleFeedSyncService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -36,6 +37,10 @@ class IntegrationSettings extends Page
     public ?string $meta_verify_token = null;
     public bool $meta_is_active = true;
 
+    /* ── Feed de Estoque (Revenda Mais XML) ── */
+    public ?string $vehicle_feed_url = null;
+    public bool $vehicle_feed_is_active = true;
+
     public function getMaxContentWidth(): Width|string|null
     {
         return Width::FourExtraLarge;
@@ -65,6 +70,13 @@ class IntegrationSettings extends Page
         } else {
             // Generate a default verify token
             $this->meta_verify_token = 'elite-' . strtolower(str_replace(' ', '-', $tenant->name)) . '-' . random_int(1000, 9999);
+        }
+
+        $vehicleFeed = IntegrationSetting::forTenant($tenant->id, VehicleFeedSyncService::PROVIDER);
+
+        if ($vehicleFeed) {
+            $this->vehicle_feed_url = $vehicleFeed->setting('feed_url');
+            $this->vehicle_feed_is_active = $vehicleFeed->is_active;
         }
     }
 
@@ -174,5 +186,79 @@ class IntegrationSettings extends Page
             ->title('Meta Platform salva')
             ->body('As configurações do Facebook/Instagram foram salvas com sucesso.')
             ->send();
+    }
+
+    public function saveVehicleFeed(): void
+    {
+        $this->validate([
+            'vehicle_feed_url' => 'required|url',
+        ], [
+            'vehicle_feed_url.required' => 'A URL do feed XML é obrigatória.',
+            'vehicle_feed_url.url' => 'Informe uma URL válida para o feed.',
+        ]);
+
+        $tenant = filament()->getTenant();
+
+        IntegrationSetting::updateOrCreate(
+            ['tenant_id' => $tenant->id, 'provider' => VehicleFeedSyncService::PROVIDER],
+            [
+                'credentials' => [],
+                'settings' => [
+                    'feed_url' => trim((string) $this->vehicle_feed_url),
+                ],
+                'is_active' => $this->vehicle_feed_is_active,
+            ]
+        );
+
+        Notification::make()
+            ->success()
+            ->title('Feed XML salvo')
+            ->body('Configuração do feed de estoque salva com sucesso.')
+            ->send();
+    }
+
+    public function testVehicleFeed(): void
+    {
+        $this->validate([
+            'vehicle_feed_url' => 'required|url',
+        ]);
+
+        try {
+            $response = Http::timeout(15)->get((string) $this->vehicle_feed_url);
+
+            if (! $response->successful()) {
+                Notification::make()
+                    ->danger()
+                    ->title('Falha ao consultar feed')
+                    ->body('HTTP ' . $response->status())
+                    ->send();
+                return;
+            }
+
+            $xml = @simplexml_load_string($response->body());
+
+            if (! $xml) {
+                Notification::make()
+                    ->danger()
+                    ->title('XML inválido')
+                    ->body('Não foi possível interpretar o XML informado.')
+                    ->send();
+                return;
+            }
+
+            $total = isset($xml->AD) ? count($xml->AD) : 0;
+
+            Notification::make()
+                ->success()
+                ->title('Feed válido')
+                ->body("Conexão OK. {$total} veículo(s) encontrado(s) no XML.")
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->danger()
+                ->title('Erro no teste do feed')
+                ->body($e->getMessage())
+                ->send();
+        }
     }
 }

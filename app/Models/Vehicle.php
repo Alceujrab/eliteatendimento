@@ -14,7 +14,7 @@ class Vehicle extends Model
         'tenant_id', 'brand', 'model', 'version', 'year_manufacture', 'year_model',
         'color', 'fuel_type', 'transmission', 'mileage', 'price', 'fipe_price',
         'plate', 'chassis', 'renavam', 'description', 'features', 'photos',
-        'status', 'condition',
+        'status', 'condition', 'external_source', 'external_id', 'last_synced_at',
     ];
 
     protected $casts = [
@@ -22,6 +22,7 @@ class Vehicle extends Model
         'fipe_price' => 'decimal:2',
         'features' => 'array',
         'photos' => 'array',
+        'last_synced_at' => 'datetime',
     ];
 
     public function tenant(): BelongsTo

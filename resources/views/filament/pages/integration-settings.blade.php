@@ -253,5 +253,48 @@
                 </div>
             @endif
         </x-filament::section>
+
+        {{-- ╔══════════════════════════════════════════════════════════╗ --}}
+        {{-- ║  FEED DE ESTOQUE (XML)                                   ║ --}}
+        {{-- ╚══════════════════════════════════════════════════════════╝ --}}
+        <x-filament::section icon="heroicon-o-arrow-path" collapsible>
+            <x-slot name="heading">Feed XML de Estoque</x-slot>
+            <x-slot name="description">
+                Sincroniza automaticamente o estoque para o catálogo a cada 15 minutos e permite sincronização manual no menu de Veículos.
+            </x-slot>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="fi-fo-field-wrp-label text-sm font-medium text-gray-950 dark:text-white">
+                        URL do Feed XML <span class="text-danger-600">*</span>
+                    </label>
+                    <x-filament::input.wrapper>
+                        <x-filament::input
+                            type="url"
+                            wire:model="vehicle_feed_url"
+                            placeholder="https://app.revendamais.com.br/.../companyFeed/...xml"
+                        />
+                    </x-filament::input.wrapper>
+                    <p class="mt-1 text-xs text-gray-500">Use o link XML do sistema de estoque da empresa (Revenda Mais ou similar).</p>
+                    @error('vehicle_feed_url') <p class="mt-1 text-xs text-danger-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <x-filament::input.checkbox wire:model="vehicle_feed_is_active" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Sincronização automática ativa (a cada 15 minutos)</span>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <x-filament::button wire:click="saveVehicleFeed" icon="heroicon-o-check">
+                        Salvar Feed
+                    </x-filament::button>
+
+                    <x-filament::button wire:click="testVehicleFeed" color="gray" icon="heroicon-o-signal" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="testVehicleFeed">Testar Feed</span>
+                        <span wire:loading wire:target="testVehicleFeed">Testando...</span>
+                    </x-filament::button>
+                </div>
+            </div>
+        </x-filament::section>
     </div>
 </x-filament-panels::page>
