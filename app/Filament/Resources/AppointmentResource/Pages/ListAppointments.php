@@ -32,6 +32,7 @@ class ListAppointments extends ListRecords
                 ->label('Metas da Agenda')
                 ->icon('heroicon-o-adjustments-horizontal')
                 ->color('primary')
+                ->visible(fn (): bool => auth()->check() && auth()->user()->isGestor())
                 ->fillForm(function (): array {
                     $tenant = filament()->getTenant();
                     $settings = is_array($tenant?->settings) ? $tenant->settings : [];
