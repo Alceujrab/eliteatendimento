@@ -21,11 +21,6 @@ class ListAppointments extends ListRecords
         ];
     }
 
-    protected function getHeaderWidgetsColumns(): int|array
-    {
-        return 1;
-    }
-
     protected function getHeaderActions(): array
     {
         return [
