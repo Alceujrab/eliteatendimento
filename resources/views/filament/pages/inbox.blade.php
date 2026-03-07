@@ -28,10 +28,18 @@
             max-width: 0.875rem;
             max-height: 0.75rem;
         }
+
+        .inbox-ui .inbox-sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
     </style>
     <div
         x-data="{
             inboxHeight: 'auto',
+            shortcutsOpen: false,
             init() {
                 this.setHeight();
                 window.addEventListener('resize', () => this.setHeight());
@@ -51,8 +59,20 @@
                     const el = document.getElementById('messages-container');
                     if (el) el.scrollTop = el.scrollHeight;
                 });
+            },
+            focusSearch() {
+                this.$refs.searchInput?.focus();
+                this.$refs.searchInput?.select();
+            },
+            applyQueueFilter(status) {
+                this.$wire.set('filterStatus', status);
             }
         }"
+        x-on:keydown.window.slash.prevent="focusSearch()"
+        x-on:keydown.window.alt.1.prevent="applyQueueFilter('new')"
+        x-on:keydown.window.alt.2.prevent="applyQueueFilter('open')"
+        x-on:keydown.window.alt.3.prevent="applyQueueFilter('pending')"
+        x-on:keydown.window.alt.4.prevent="applyQueueFilter('resolved')"
         x-on:message-sent.window="scrollToBottom()"
         :style="{ height: inboxHeight }"
         class="inbox-ui flex rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm"
@@ -61,13 +81,73 @@
         {{-- ═══════ LEFT SIDEBAR — CONVERSATION LIST ═══════ --}}
         <div class="w-[380px] min-w-[320px] flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900">
             {{-- Header --}}
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800">
+            <div class="inbox-sticky-header px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-gray-800/95">
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white">Conversas</h2>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-2">
                         <span class="text-xs text-gray-500 dark:text-gray-400">
                             {{ $this->getConversations()->count() }} conversas
                         </span>
+                        <button
+                            @click="shortcutsOpen = !shortcutsOpen"
+                            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                        >
+                            <x-heroicon-m-command-line class="w-3 h-3" />
+                            Atalhos
+                        </button>
+                    </div>
+                </div>
+
+                <div x-show="shortcutsOpen" x-transition class="mb-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2.5 py-2 text-[11px] text-gray-600 dark:text-gray-300">
+                    <div class="flex flex-wrap gap-x-3 gap-y-1">
+                        <span><b>/</b> buscar</span>
+                        <span><b>Alt+1</b> Novo</span>
+                        <span><b>Alt+2</b> Aberto</span>
+                        <span><b>Alt+3</b> Aguardando</span>
+                        <span><b>Alt+4</b> Resolvido</span>
+                        <span><b>Ctrl+Enter</b> enviar</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button
+                        wire:click="$set('filterStatus', 'new')"
+                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'new' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                    >
+                        <p class="text-[10px] text-gray-500">Fila Novo (Alt+1)</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['new'] ?? 0 }}</p>
+                    </button>
+                    <button
+                        wire:click="$set('filterStatus', 'open')"
+                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'open' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                    >
+                        <p class="text-[10px] text-gray-500">Fila Aberto (Alt+2)</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['open'] ?? 0 }}</p>
+                    </button>
+                    <button
+                        wire:click="$set('filterStatus', 'pending')"
+                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'pending' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                    >
+                        <p class="text-[10px] text-gray-500">Fila Aguardando (Alt+3)</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['pending'] ?? 0 }}</p>
+                    </button>
+                    <button
+                        wire:click="$set('filterStatus', 'resolved')"
+                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'resolved' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                    >
+                        <p class="text-[10px] text-gray-500">Fila Resolvido (Alt+4)</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['resolved'] ?? 0 }}</p>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="rounded-lg bg-red-50 dark:bg-red-900/20 px-2 py-1.5 border border-red-100 dark:border-red-900/30">
+                        <p class="text-[10px] text-red-600 dark:text-red-300">SLA 1ª resposta (5 min)</p>
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-200">{{ $this->slaStats['first_response_overdue'] ?? 0 }}</p>
+                    </div>
+                    <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 border border-amber-100 dark:border-amber-900/30">
+                        <p class="text-[10px] text-amber-700 dark:text-amber-300">SLA aguardando (30 min)</p>
+                        <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">{{ $this->slaStats['pending_overdue'] ?? 0 }}</p>
                     </div>
                 </div>
 
@@ -75,6 +155,7 @@
                 <div class="relative mb-3">
                     <x-heroicon-m-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
+                        x-ref="searchInput"
                         type="text"
                         wire:model.live.debounce.300ms="searchQuery"
                         placeholder="Buscar conversa..."
@@ -535,7 +616,8 @@
                                 <div class="flex-1">
                                     <textarea
                                         wire:model="messageText"
-                                        wire:keydown.enter.prevent="sendMessage"
+                                        x-on:keydown.enter.prevent="if (!$event.shiftKey) { $wire.sendMessage() }"
+                                        x-on:keydown.ctrl.enter.prevent="$wire.sendMessage()"
                                         placeholder="{{ $isInternalNote ? 'Escreva uma nota interna...' : 'Digite uma mensagem...' }}"
                                         rows="1"
                                         class="w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400"

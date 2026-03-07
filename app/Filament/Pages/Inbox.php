@@ -11,6 +11,7 @@ use App\Services\ChannelDispatcher;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -73,6 +74,9 @@ class Inbox extends Page
             'active' => $query->whereIn('status', ['new', 'open', 'pending']),
             'mine' => $query->where('assigned_to', Auth::id())->whereIn('status', ['new', 'open', 'pending']),
             'unassigned' => $query->whereNull('assigned_to')->whereIn('status', ['new', 'open', 'pending']),
+            'new' => $query->where('status', 'new'),
+            'open' => $query->where('status', 'open'),
+            'pending' => $query->where('status', 'pending'),
             'resolved' => $query->where('status', 'resolved'),
             default => $query,
         };
@@ -155,6 +159,46 @@ class Inbox extends Page
             'mine' => (clone $base)->where('assigned_to', Auth::id())->whereIn('status', ['new', 'open', 'pending'])->count(),
             'unassigned' => (clone $base)->whereNull('assigned_to')->whereIn('status', ['new', 'open', 'pending'])->count(),
             'unread' => (clone $base)->where('unread_count', '>', 0)->count(),
+        ];
+    }
+
+    #[Computed]
+    public function queueStats(): array
+    {
+        $tenant = filament()->getTenant();
+
+        $base = Conversation::query()->where('tenant_id', $tenant->id);
+
+        return [
+            'new' => (clone $base)->where('status', 'new')->count(),
+            'open' => (clone $base)->where('status', 'open')->count(),
+            'pending' => (clone $base)->where('status', 'pending')->count(),
+            'resolved' => (clone $base)->where('status', 'resolved')->count(),
+        ];
+    }
+
+    #[Computed]
+    public function slaStats(): array
+    {
+        $tenant = filament()->getTenant();
+        $now = Carbon::now();
+
+        $firstResponseOverdue = Conversation::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('status', ['new', 'open'])
+            ->whereNull('first_response_at')
+            ->where('created_at', '<=', $now->copy()->subMinutes(5))
+            ->count();
+
+        $pendingOverdue = Conversation::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->where('updated_at', '<=', $now->copy()->subMinutes(30))
+            ->count();
+
+        return [
+            'first_response_overdue' => $firstResponseOverdue,
+            'pending_overdue' => $pendingOverdue,
         ];
     }
 
