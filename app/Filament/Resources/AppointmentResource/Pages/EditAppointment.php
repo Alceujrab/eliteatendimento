@@ -4,20 +4,35 @@ namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Services\AppointmentFlowService;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class EditAppointment extends EditRecord
 {
     protected static string $resource = AppointmentResource::class;
 
+    private ?string $oldStatus = null;
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $this->oldStatus = (string) $this->record->status;
         $data['duration_minutes'] = (int) ($data['duration_minutes'] ?? 60);
 
         $this->ensureNoConflict($data);
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        app(AppointmentFlowService::class)->registerStatusChange(
+            $this->record,
+            $this->oldStatus ?? (string) $this->record->status,
+            (string) $this->record->status,
+            Auth::id(),
+        );
     }
 
     protected function getRedirectUrl(): string

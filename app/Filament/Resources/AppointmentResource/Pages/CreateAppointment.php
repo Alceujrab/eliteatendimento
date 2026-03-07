@@ -4,7 +4,9 @@ namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Services\AppointmentFlowService;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CreateAppointment extends CreateRecord
@@ -26,6 +28,11 @@ class CreateAppointment extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        app(AppointmentFlowService::class)->registerCreated($this->record, Auth::id());
     }
 
     private function ensureNoConflict(array $data): void

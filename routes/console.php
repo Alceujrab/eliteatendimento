@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('vehicles:sync-feed')->everyFifteenMinutes();
+Schedule::command('appointments:send-reminders')->everyFiveMinutes();

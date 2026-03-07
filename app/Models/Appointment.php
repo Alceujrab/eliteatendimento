@@ -10,12 +10,13 @@ class Appointment extends Model
 {
     protected $fillable = [
         'tenant_id', 'contact_id', 'lead_id', 'user_id', 'vehicle_id', 'type',
-        'scheduled_at', 'duration_minutes', 'status', 'notes',
+        'scheduled_at', 'duration_minutes', 'status', 'notes', 'reminder_sent_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'duration_minutes' => 'integer',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function tenant(): BelongsTo { return $this->belongsTo(Tenant::class); }

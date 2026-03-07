@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AppointmentResource\Pages;
 use App\Models\Appointment;
+use App\Services\AppointmentFlowService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
@@ -13,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentResource extends Resource
 {
@@ -186,25 +188,41 @@ class AppointmentResource extends Resource
                     ->icon('heroicon-o-check')
                     ->color('info')
                     ->visible(fn (Appointment $record): bool => $record->status === 'scheduled')
-                    ->action(fn (Appointment $record) => $record->update(['status' => 'confirmed'])),
+                    ->action(function (Appointment $record, AppointmentFlowService $flowService): void {
+                        $oldStatus = $record->status;
+                        $record->update(['status' => 'confirmed']);
+                        $flowService->registerStatusChange($record->fresh(), $oldStatus, 'confirmed', Auth::id());
+                    }),
                 Actions\Action::make('complete')
                     ->label('Concluir')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed']))
-                    ->action(fn (Appointment $record) => $record->update(['status' => 'completed'])),
+                    ->action(function (Appointment $record, AppointmentFlowService $flowService): void {
+                        $oldStatus = $record->status;
+                        $record->update(['status' => 'completed']);
+                        $flowService->registerStatusChange($record->fresh(), $oldStatus, 'completed', Auth::id());
+                    }),
                 Actions\Action::make('no_show')
                     ->label('No-show')
                     ->icon('heroicon-o-exclamation-triangle')
                     ->color('warning')
                     ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed']))
-                    ->action(fn (Appointment $record) => $record->update(['status' => 'no_show'])),
+                    ->action(function (Appointment $record, AppointmentFlowService $flowService): void {
+                        $oldStatus = $record->status;
+                        $record->update(['status' => 'no_show']);
+                        $flowService->registerStatusChange($record->fresh(), $oldStatus, 'no_show', Auth::id());
+                    }),
                 Actions\Action::make('cancel')
                     ->label('Cancelar')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed']))
-                    ->action(fn (Appointment $record) => $record->update(['status' => 'cancelled'])),
+                    ->action(function (Appointment $record, AppointmentFlowService $flowService): void {
+                        $oldStatus = $record->status;
+                        $record->update(['status' => 'cancelled']);
+                        $flowService->registerStatusChange($record->fresh(), $oldStatus, 'cancelled', Auth::id());
+                    }),
                 Actions\EditAction::make(),
             ])
             ->bulkActions([
