@@ -82,6 +82,17 @@
                     />
                 </div>
 
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="rounded-lg bg-gray-100 dark:bg-gray-700 px-2 py-1.5">
+                        <p class="text-[10px] text-gray-500">Ativas</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->inboxStats['active'] ?? 0 }}</p>
+                    </div>
+                    <div class="rounded-lg bg-gray-100 dark:bg-gray-700 px-2 py-1.5">
+                        <p class="text-[10px] text-gray-500">Não lidas</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->inboxStats['unread'] ?? 0 }}</p>
+                    </div>
+                </div>
+
                 {{-- Filter tabs --}}
                 <div class="flex gap-1">
                     @foreach ([
@@ -120,6 +131,35 @@
                             {{ $label }}
                         </button>
                     @endforeach
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 mt-3">
+                    <select
+                        wire:model.live="filterAgent"
+                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1.5"
+                    >
+                        <option value="all">Todos os atendentes</option>
+                        <option value="me">Apenas minhas</option>
+                        <option value="unassigned">Sem agente</option>
+                        @foreach($this->agents as $agent)
+                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <select
+                        wire:model.live="filterWhatsAppChannel"
+                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1.5"
+                    >
+                        <option value="all">Todas instâncias WhatsApp</option>
+                        @foreach($this->whatsappChannels as $channel)
+                            <option value="{{ $channel->id }}">{{ $channel->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <input type="checkbox" wire:model.live="filterUnreadOnly" class="rounded border-gray-300 dark:border-gray-600" />
+                        Mostrar apenas não lidas
+                    </label>
                 </div>
             </div>
 
@@ -259,6 +299,35 @@
                                 <x-heroicon-m-hand-raised class="w-3.5 h-3.5" />
                                 Assumir
                             </button>
+                        @endif
+
+                        @if ($conv->assigned_to)
+                            <div class="relative" x-data="{ openTransfer: false }">
+                                <button
+                                    @click="openTransfer = !openTransfer"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                                    title="Transferir conversa"
+                                >
+                                    <x-heroicon-m-arrow-right-circle class="w-3.5 h-3.5" />
+                                    Transferir
+                                </button>
+
+                                <div
+                                    x-show="openTransfer"
+                                    @click.outside="openTransfer = false"
+                                    class="absolute right-0 mt-1 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-20"
+                                >
+                                    @foreach($this->agents as $agent)
+                                        <button
+                                            wire:click="transferConversation({{ $agent->id }})"
+                                            @click="openTransfer = false"
+                                            class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                                        >
+                                            {{ $agent->name }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
                         @endif
 
                         @if (in_array($conv->status, ['new', 'open', 'pending']))

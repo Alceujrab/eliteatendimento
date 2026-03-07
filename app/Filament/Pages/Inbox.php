@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\QuickReply;
+use App\Models\User;
 use App\Services\ChannelDispatcher;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
@@ -42,6 +44,9 @@ class Inbox extends Page
     public string $searchQuery = '';
     public string $filterStatus = 'active'; // active, mine, unassigned, all
     public string $filterChannel = 'all'; // all, whatsapp, instagram, facebook
+    public string $filterAgent = 'all'; // all, me, unassigned, {id}
+    public string $filterWhatsAppChannel = 'all'; // all, {channel_id}
+    public bool $filterUnreadOnly = false;
     public bool $showQuickReplies = false;
     public bool $showContactInfo = false;
     public bool $isInternalNote = false;
@@ -92,7 +97,65 @@ class Inbox extends Page
             default => $query,
         };
 
+        // Agent filter (multiusuário)
+        if ($this->filterAgent === 'me') {
+            $query->where('assigned_to', Auth::id());
+        } elseif ($this->filterAgent === 'unassigned') {
+            $query->whereNull('assigned_to');
+        } elseif ($this->filterAgent !== 'all' && is_numeric($this->filterAgent)) {
+            $query->where('assigned_to', (int) $this->filterAgent);
+        }
+
+        // WhatsApp instance filter (multi-whatsapp)
+        if ($this->filterWhatsAppChannel !== 'all' && is_numeric($this->filterWhatsAppChannel)) {
+            $query->where('channel_id', (int) $this->filterWhatsAppChannel);
+        }
+
+        if ($this->filterUnreadOnly) {
+            $query->where('unread_count', '>', 0);
+        }
+
         return $query->orderByDesc('last_message_at')->limit(100)->get();
+    }
+
+    #[Computed]
+    public function agents(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return User::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    #[Computed]
+    public function whatsappChannels(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return Channel::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('type', ['whatsapp_meta', 'whatsapp_evolution'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type']);
+    }
+
+    #[Computed]
+    public function inboxStats(): array
+    {
+        $tenant = filament()->getTenant();
+
+        $base = Conversation::query()->where('tenant_id', $tenant->id);
+
+        return [
+            'active' => (clone $base)->whereIn('status', ['new', 'open', 'pending'])->count(),
+            'mine' => (clone $base)->where('assigned_to', Auth::id())->whereIn('status', ['new', 'open', 'pending'])->count(),
+            'unassigned' => (clone $base)->whereNull('assigned_to')->whereIn('status', ['new', 'open', 'pending'])->count(),
+            'unread' => (clone $base)->where('unread_count', '>', 0)->count(),
+        ];
     }
 
     #[Computed]
@@ -211,6 +274,19 @@ class Inbox extends Page
         Conversation::where('id', $this->activeConversationId)
             ->update([
                 'assigned_to' => Auth::id(),
+                'status' => 'open',
+            ]);
+    }
+
+    public function transferConversation(int $userId): void
+    {
+        if (! $this->activeConversationId) {
+            return;
+        }
+
+        Conversation::where('id', $this->activeConversationId)
+            ->update([
+                'assigned_to' => $userId,
                 'status' => 'open',
             ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CampaignResource\Pages;
+use App\Filament\Resources\CampaignResource\RelationManagers\MessagesRelationManager;
 use App\Models\Campaign;
 use App\Services\WhatsAppCampaignService;
 use Filament\Forms;
@@ -259,7 +260,9 @@ class CampaignResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            MessagesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
