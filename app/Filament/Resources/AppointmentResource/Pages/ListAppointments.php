@@ -5,9 +5,11 @@ namespace App\Filament\Resources\AppointmentResource\Pages;
 use App\Filament\Resources\AppointmentResource;
 use App\Filament\Resources\AppointmentResource\Widgets\MonthlyGoalsProgress;
 use App\Filament\Resources\AppointmentResource\Widgets\TopSellersRanking;
+use App\Models\Tenant;
 use App\Services\AppointmentsSellerMetricsService;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Carbon;
 
@@ -26,6 +28,59 @@ class ListAppointments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('setAgendaGoals')
+                ->label('Metas da Agenda')
+                ->icon('heroicon-o-adjustments-horizontal')
+                ->color('primary')
+                ->fillForm(function (): array {
+                    $tenant = filament()->getTenant();
+                    $settings = is_array($tenant?->settings) ? $tenant->settings : [];
+                    $goals = is_array($settings['agenda_goals'] ?? null) ? $settings['agenda_goals'] : [];
+
+                    return [
+                        'appointments' => (int) ($goals['appointments'] ?? 120),
+                        'attendance' => (int) ($goals['attendance'] ?? 75),
+                        'conversion' => (int) ($goals['conversion'] ?? 20),
+                    ];
+                })
+                ->form([
+                    Forms\Components\TextInput::make('appointments')
+                        ->label('Meta mensal de agendamentos')
+                        ->numeric()
+                        ->minValue(1)
+                        ->required(),
+                    Forms\Components\TextInput::make('attendance')
+                        ->label('Meta de comparecimento (%)')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->required(),
+                    Forms\Components\TextInput::make('conversion')
+                        ->label('Meta de conversão (%)')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    /** @var Tenant $tenant */
+                    $tenant = filament()->getTenant();
+
+                    $settings = is_array($tenant->settings) ? $tenant->settings : [];
+                    $settings['agenda_goals'] = [
+                        'appointments' => (int) ($data['appointments'] ?? 120),
+                        'attendance' => (int) ($data['attendance'] ?? 75),
+                        'conversion' => (int) ($data['conversion'] ?? 20),
+                    ];
+
+                    $tenant->update(['settings' => $settings]);
+
+                    Notification::make()
+                        ->success()
+                        ->title('Metas da agenda salvas')
+                        ->body('Os novos objetivos mensais já estão valendo nos cards e relatórios.')
+                        ->send();
+                }),
             Actions\Action::make('exportBySeller')
                 ->label('Exportar Vendedores (CSV)')
                 ->icon('heroicon-o-arrow-down-tray')

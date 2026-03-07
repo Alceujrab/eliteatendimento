@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AppointmentResource\Pages;
 use App\Models\Appointment;
+use App\Services\AppointmentAvailabilityService;
 use App\Services\AppointmentFlowService;
 use Filament\Actions;
 use Filament\Forms;
@@ -15,6 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AppointmentResource extends Resource
 {
@@ -183,6 +185,72 @@ class AppointmentResource extends Resource
                     ->relationship('user', 'name'),
             ])
             ->actions([
+                Actions\Action::make('reschedule')
+                    ->label('Reagendar')
+                    ->icon('heroicon-o-clock')
+                    ->color('primary')
+                    ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed', 'no_show']))
+                    ->fillForm(fn (Appointment $record): array => [
+                        'scheduled_at' => optional($record->scheduled_at)?->format('Y-m-d H:i:s'),
+                        'duration_minutes' => (int) ($record->duration_minutes ?? 60),
+                    ])
+                    ->form([
+                        Forms\Components\DateTimePicker::make('scheduled_at')
+                            ->label('Novo horário')
+                            ->required()
+                            ->seconds(false)
+                            ->native(false),
+                        Forms\Components\TextInput::make('duration_minutes')
+                            ->label('Nova duração (min)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(15)
+                            ->maxValue(480),
+                    ])
+                    ->action(function (Appointment $record, array $data, AppointmentFlowService $flowService): void {
+                        $tenant = filament()->getTenant();
+                        $newStart = Carbon::parse((string) $data['scheduled_at']);
+                        $newDuration = (int) ($data['duration_minutes'] ?? 60);
+
+                        $availabilityMessage = app(AppointmentAvailabilityService::class)->assertWithinAvailability(
+                            tenant: $tenant,
+                            userId: (int) $record->user_id,
+                            scheduledAt: $newStart,
+                            durationMinutes: $newDuration,
+                        );
+
+                        if ($availabilityMessage) {
+                            throw ValidationException::withMessages([
+                                'scheduled_at' => $availabilityMessage,
+                            ]);
+                        }
+
+                        $hasConflict = Appointment::hasConflict(
+                            tenantId: (int) $tenant->id,
+                            userId: (int) $record->user_id,
+                            contactId: (int) $record->contact_id,
+                            scheduledAt: $newStart,
+                            durationMinutes: $newDuration,
+                            ignoreAppointmentId: (int) $record->id,
+                        );
+
+                        if ($hasConflict) {
+                            throw ValidationException::withMessages([
+                                'scheduled_at' => 'Já existe outro agendamento no mesmo horário para este responsável.',
+                            ]);
+                        }
+
+                        $oldStatus = $record->status;
+
+                        $record->update([
+                            'scheduled_at' => $newStart,
+                            'duration_minutes' => $newDuration,
+                            'status' => 'scheduled',
+                            'reminder_sent_at' => null,
+                        ]);
+
+                        $flowService->registerStatusChange($record->fresh(), $oldStatus, 'scheduled', Auth::id());
+                    }),
                 Actions\Action::make('confirm')
                     ->label('Confirmar')
                     ->icon('heroicon-o-check')
@@ -211,6 +279,9 @@ class AppointmentResource extends Resource
                     ->action(function (Appointment $record, AppointmentFlowService $flowService): void {
                         $oldStatus = $record->status;
                         $record->update(['status' => 'no_show']);
+                        if ($record->lead_id) {
+                            $record->lead()->update(['next_follow_up' => Carbon::now()->addDay()]);
+                        }
                         $flowService->registerStatusChange($record->fresh(), $oldStatus, 'no_show', Auth::id());
                     }),
                 Actions\Action::make('cancel')
