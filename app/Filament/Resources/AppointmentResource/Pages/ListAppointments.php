@@ -87,6 +87,7 @@ class ListAppointments extends ListRecords
                 ->label('Exportar Vendedores (CSV)')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
+                ->visible(fn (): bool => Auth::user()?->isGestor() ?? false)
                 ->form([
                     Forms\Components\Select::make('days')
                         ->label('Período')
