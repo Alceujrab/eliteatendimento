@@ -2,13 +2,12 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Appointment;
+use App\Services\AppointmentsSellerMetricsService;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
 class AppointmentsBySellerChart extends ChartWidget
 {
-    protected ?string $heading = 'Agenda por Vendedor (30 dias)';
+    protected ?string $heading = 'Agenda por Vendedor';
 
     protected static ?int $sort = 3;
 
@@ -16,62 +15,25 @@ class AppointmentsBySellerChart extends ChartWidget
 
     protected string | null $pollingInterval = '60s';
 
+    public ?string $filter = '30';
+
+    protected function getFilters(): ?array
+    {
+        return [
+            '7' => 'Últimos 7 dias',
+            '30' => 'Últimos 30 dias',
+            '90' => 'Últimos 90 dias',
+        ];
+    }
+
     protected function getData(): array
     {
         $tenant = filament()->getTenant();
 
-        $startDate = Carbon::now()->subDays(30)->startOfDay();
-        $endDate = Carbon::now()->endOfDay();
+        $days = (int) ($this->filter ?: 30);
 
-        $appointments = Appointment::query()
-            ->with(['user:id,name', 'lead:id,stage'])
-            ->where('tenant_id', $tenant->id)
-            ->whereBetween('scheduled_at', [$startDate, $endDate])
-            ->whereNotNull('user_id')
-            ->whereIn('status', ['completed', 'no_show', 'cancelled', 'scheduled', 'confirmed'])
-            ->get(['id', 'user_id', 'lead_id', 'status']);
-
-        $bySeller = $appointments->groupBy('user_id');
-
-        $rows = $bySeller->map(function ($items, $userId) {
-            $userName = optional($items->first()->user)->name ?? "Usuário {$userId}";
-
-            $attendanceBase = $items->whereIn('status', ['completed', 'no_show'])->count();
-            $completed = $items->where('status', 'completed')->count();
-
-            $attendanceRate = $attendanceBase > 0
-                ? round(($completed / $attendanceBase) * 100, 1)
-                : 0.0;
-
-            $completedWithLead = $items
-                ->where('status', 'completed')
-                ->filter(fn (Appointment $appointment) => filled($appointment->lead_id))
-                ->pluck('lead_id')
-                ->unique();
-
-            $wonLeadCount = $items
-                ->where('status', 'completed')
-                ->filter(fn (Appointment $appointment) => filled($appointment->lead_id) && optional($appointment->lead)->stage === 'won')
-                ->pluck('lead_id')
-                ->unique()
-                ->count();
-
-            $conversionBase = $completedWithLead->count();
-
-            $conversionRate = $conversionBase > 0
-                ? round(($wonLeadCount / $conversionBase) * 100, 1)
-                : 0.0;
-
-            return [
-                'user' => $userName,
-                'attendance_rate' => $attendanceRate,
-                'conversion_rate' => $conversionRate,
-                'volume' => $items->count(),
-            ];
-        })
-            ->sortByDesc('volume')
-            ->take(8)
-            ->values();
+        $rows = app(AppointmentsSellerMetricsService::class)
+            ->build($tenant->id, $days, 8);
 
         return [
             'datasets' => [
