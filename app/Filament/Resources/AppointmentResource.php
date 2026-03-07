@@ -241,4 +241,26 @@ class AppointmentResource extends Resource
             'edit' => Pages\EditAppointment::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $tenant = filament()->getTenant();
+
+        if (! $tenant) {
+            return null;
+        }
+
+        $count = static::getModel()::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereDate('scheduled_at', Carbon::today())
+            ->whereIn('status', ['scheduled', 'confirmed'])
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        return 'warning';
+    }
 }
