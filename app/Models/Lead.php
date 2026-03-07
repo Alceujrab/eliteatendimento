@@ -49,6 +49,11 @@ class Lead extends Model
         return $this->hasMany(LeadActivity::class);
     }
 
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     /* ── Helpers ── */
 
     public function getStageLabelAttribute(): string
