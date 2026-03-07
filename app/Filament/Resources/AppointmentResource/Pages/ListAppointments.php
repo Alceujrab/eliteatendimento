@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AppointmentResource\Pages;
 
 use App\Filament\Resources\AppointmentResource;
+use App\Filament\Resources\AppointmentResource\Widgets\TopSellersRanking;
 use App\Services\AppointmentsSellerMetricsService;
 use Filament\Actions;
 use Filament\Forms;
@@ -12,6 +13,18 @@ use Illuminate\Support\Carbon;
 class ListAppointments extends ListRecords
 {
     protected static string $resource = AppointmentResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            TopSellersRanking::class,
+        ];
+    }
+
+    protected function getHeaderWidgetsColumns(): int|array
+    {
+        return 1;
+    }
 
     protected function getHeaderActions(): array
     {
