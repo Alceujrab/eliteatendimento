@@ -51,9 +51,10 @@ class AppointmentResource extends Resource
                         ->required(),
                     Forms\Components\Select::make('vehicle_id')
                         ->label('Veículo (opcional)')
-                        ->relationship('vehicle', 'full_name')
+                        ->relationship('vehicle', 'model')
                         ->searchable()
-                        ->preload(),
+                        ->preload()
+                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name),
                     Forms\Components\Select::make('type')
                         ->label('Tipo')
                         ->options([
