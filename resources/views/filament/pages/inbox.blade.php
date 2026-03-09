@@ -109,6 +109,14 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             <button
+                                wire:click="openNewConversationModal"
+                                class="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-primary-700"
+                                title="Novo atendimento"
+                            >
+                                <x-heroicon-m-plus class="w-3 h-3" />
+                                Novo
+                            </button>
+                            <button
                                 wire:click="toggleSortOrder"
                                 class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 title="{{ $sortOrder === 'recent' ? 'Mais recentes' : 'Mais antigas' }}"
@@ -334,6 +342,13 @@
                     <div class="inbox-empty-state flex flex-col items-center justify-center py-12 text-gray-400">
                         <x-heroicon-o-chat-bubble-left-right class="w-12 h-12 mb-3" />
                         <p class="text-sm">Nenhuma conversa encontrada</p>
+                        <button
+                            wire:click="openNewConversationModal"
+                            class="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700"
+                        >
+                            <x-heroicon-m-plus class="w-4 h-4" />
+                            Criar atendimento
+                        </button>
                     </div>
                 @endforelse
             </div>
@@ -821,9 +836,72 @@
                     <p class="text-sm text-gray-400 dark:text-gray-500 max-w-sm">
                         Selecione uma conversa para iniciar o atendimento. Use os filtros a esquerda para organizar suas conversas.
                     </p>
+                    <button
+                        wire:click="openNewConversationModal"
+                        class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                    >
+                        <x-heroicon-m-plus class="w-4 h-4" />
+                        Novo atendimento
+                    </button>
                 </div>
             </div>
         @endif
     </div>
+
+    @if ($showNewConversationModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4" wire:key="new-conversation-modal">
+            <div class="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-gray-900">
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">Novo atendimento</h3>
+                    <button wire:click="closeNewConversationModal" class="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <x-heroicon-m-x-mark class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Contato</label>
+                        <select wire:model.live="newConversationContactId" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+                            <option value="">Selecione um contato</option>
+                            @foreach ($this->contacts as $contact)
+                                <option value="{{ $contact->id }}">
+                                    {{ $contact->name }}{{ $contact->phone ? ' - ' . $contact->phone : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Canal</label>
+                        <select wire:model.live="newConversationChannelId" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+                            <option value="">Selecione um canal</option>
+                            @foreach ($this->activeChannels as $channel)
+                                <option value="{{ $channel->id }}">{{ $channel->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Mensagem inicial (opcional)</label>
+                        <textarea
+                            wire:model="newConversationInitialMessage"
+                            rows="3"
+                            placeholder="Digite a primeira mensagem..."
+                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-end gap-2">
+                    <button wire:click="closeNewConversationModal" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                        Cancelar
+                    </button>
+                    <button wire:click="createConversation" class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700">
+                        Criar atendimento
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>
 

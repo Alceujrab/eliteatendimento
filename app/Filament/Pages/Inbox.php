@@ -9,12 +9,14 @@ use App\Models\Message;
 use App\Models\QuickReply;
 use App\Models\User;
 use App\Services\ChannelDispatcher;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 
@@ -56,6 +58,10 @@ class Inbox extends Page
     public bool $showQuickReplies = false;
     public bool $showContactInfo = false;
     public bool $isInternalNote = false;
+    public bool $showNewConversationModal = false;
+    public string $newConversationContactId = '';
+    public string $newConversationChannelId = '';
+    public string $newConversationInitialMessage = '';
 
     public function mount(): void
     {
@@ -181,6 +187,30 @@ class Inbox extends Page
         return Channel::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('type', ['whatsapp_meta', 'whatsapp_evolution'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type']);
+    }
+
+    #[Computed]
+    public function contacts(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return Contact::query()
+            ->where('tenant_id', $tenant->id)
+            ->orderBy('name')
+            ->limit(300)
+            ->get(['id', 'name', 'phone', 'email']);
+    }
+
+    #[Computed]
+    public function activeChannels(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return Channel::query()
+            ->where('tenant_id', $tenant->id)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'type']);
@@ -330,6 +360,114 @@ class Inbox extends Page
         $this->filterPeriod = 'all';
         $this->filterWhatsAppChannel = 'all';
         $this->filterUnreadOnly = false;
+    }
+
+    public function openNewConversationModal(): void
+    {
+        $this->showNewConversationModal = true;
+
+        if ($this->newConversationChannelId === '') {
+            $this->newConversationChannelId = (string) ($this->activeChannels->first()?->id ?? '');
+        }
+    }
+
+    public function closeNewConversationModal(): void
+    {
+        $this->showNewConversationModal = false;
+        $this->newConversationContactId = '';
+        $this->newConversationChannelId = '';
+        $this->newConversationInitialMessage = '';
+    }
+
+    public function createConversation(): void
+    {
+        $tenant = filament()->getTenant();
+
+        if (
+            !$tenant ||
+            $this->newConversationContactId === '' ||
+            $this->newConversationChannelId === ''
+        ) {
+            Notification::make()
+                ->title('Selecione contato e canal')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $contact = Contact::query()
+            ->where('tenant_id', $tenant->id)
+            ->find((int) $this->newConversationContactId);
+
+        $channel = Channel::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->find((int) $this->newConversationChannelId);
+
+        if (!$contact || !$channel) {
+            Notification::make()
+                ->title('Contato ou canal invalido')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $conversation = Conversation::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('contact_id', $contact->id)
+            ->where('channel_id', $channel->id)
+            ->whereIn('status', ['new', 'open', 'pending'])
+            ->orderByDesc('last_message_at')
+            ->first();
+
+        if (!$conversation) {
+            $conversation = Conversation::create([
+                'tenant_id' => $tenant->id,
+                'contact_id' => $contact->id,
+                'channel_id' => $channel->id,
+                'assigned_to' => Auth::id(),
+                'status' => 'new',
+                'priority' => 'normal',
+                'last_message_preview' => null,
+                'last_message_at' => null,
+                'unread_count' => 0,
+            ]);
+        }
+
+        $initialMessage = trim($this->newConversationInitialMessage);
+
+        if ($initialMessage !== '') {
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'user_id' => Auth::id(),
+                'contact_id' => $contact->id,
+                'type' => 'text',
+                'body' => $initialMessage,
+                'direction' => 'outbound',
+                'status' => 'sent',
+            ]);
+
+            $conversation->update([
+                'assigned_to' => $conversation->assigned_to ?? Auth::id(),
+                'status' => 'open',
+                'first_response_at' => $conversation->first_response_at ?? now(),
+                'last_message_preview' => Str::limit($initialMessage, 100),
+                'last_message_at' => now(),
+            ]);
+        }
+
+        $this->activeConversationId = $conversation->id;
+        $this->showNewConversationModal = false;
+        $this->newConversationContactId = '';
+        $this->newConversationChannelId = '';
+        $this->newConversationInitialMessage = '';
+
+        Notification::make()
+            ->title('Atendimento criado')
+            ->success()
+            ->send();
     }
 
     public function selectConversation(int $id): void
