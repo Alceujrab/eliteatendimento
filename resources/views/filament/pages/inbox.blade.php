@@ -75,7 +75,7 @@
         x-on:message-sent.window="scrollToBottom()"
         :style="{ height: inboxHeight }"
         class="inbox-ui flex rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm"
-        wire:poll.5s="refreshInbox"
+        wire:poll.2s="refreshInbox"
     >
         {{-- LEFT SIDEBAR --}}
         <div class="w-[390px] min-w-[350px] flex border-r border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
@@ -83,21 +83,21 @@
                 <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                     <x-heroicon-m-chat-bubble-left-right class="w-5 h-5" />
                 </div>
-                <button class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center opacity-70">
                     <x-heroicon-m-chat-bubble-left-right class="w-4 h-4" />
-                </button>
-                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                </div>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center opacity-60">
                     <x-heroicon-m-user-group class="w-4 h-4" />
-                </button>
-                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                </div>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center opacity-60">
                     <x-heroicon-m-calendar-days class="w-4 h-4" />
-                </button>
-                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                </div>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center opacity-60">
                     <x-heroicon-m-megaphone class="w-4 h-4" />
-                </button>
-                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition mt-auto">
+                </div>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center opacity-60 mt-auto">
                     <x-heroicon-m-cog-6-tooth class="w-4 h-4" />
-                </button>
+                </div>
             </div>
 
             <div class="flex-1 min-w-0 flex flex-col bg-gray-50 dark:bg-gray-900">
