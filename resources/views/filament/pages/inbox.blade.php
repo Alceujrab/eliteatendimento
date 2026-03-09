@@ -65,185 +65,171 @@
                 this.$refs.searchInput?.select();
             },
             applyQueueFilter(status) {
-                this.$wire.set('filterStatus', status);
+                this.$wire.setQueue(status);
             }
         }"
         x-on:keydown.window.slash.prevent="focusSearch()"
-        x-on:keydown.window.alt.1.prevent="applyQueueFilter('new')"
-        x-on:keydown.window.alt.2.prevent="applyQueueFilter('open')"
-        x-on:keydown.window.alt.3.prevent="applyQueueFilter('pending')"
-        x-on:keydown.window.alt.4.prevent="applyQueueFilter('resolved')"
+        x-on:keydown.window.alt.1.prevent="applyQueueFilter('entrada')"
+        x-on:keydown.window.alt.2.prevent="applyQueueFilter('esperando')"
+        x-on:keydown.window.alt.3.prevent="applyQueueFilter('finalizados')"
         x-on:message-sent.window="scrollToBottom()"
         :style="{ height: inboxHeight }"
         class="inbox-ui flex rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm"
         wire:poll.5s="refreshInbox"
     >
-        {{-- ═══════ LEFT SIDEBAR — CONVERSATION LIST ═══════ --}}
-        <div class="w-[360px] min-w-[320px] flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900">
-            {{-- Header --}}
-            <div class="inbox-sticky-header px-3.5 py-2.5 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-gray-800/95">
-                <div class="flex items-center justify-between mb-2.5">
-                    <h2 class="text-base font-semibold text-gray-800 dark:text-white">Conversas</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                            {{ $this->getConversations()->count() }} conversas
-                        </span>
-                        <button
-                            @click="shortcutsOpen = !shortcutsOpen"
-                            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                        >
-                            <x-heroicon-m-command-line class="w-3 h-3" />
-                            Atalhos
-                        </button>
-                    </div>
+        {{-- LEFT SIDEBAR --}}
+        <div class="w-[390px] min-w-[350px] flex border-r border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
+            <div class="w-14 flex flex-col items-center gap-2 py-3 bg-gradient-to-b from-indigo-500 to-blue-700 text-white">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <x-heroicon-m-chat-bubble-left-right class="w-5 h-5" />
                 </div>
-
-                <div x-show="shortcutsOpen" x-transition class="mb-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2.5 py-2 text-[11px] text-gray-600 dark:text-gray-300">
-                    <div class="flex flex-wrap gap-x-3 gap-y-1">
-                        <span><b>/</b> buscar</span>
-                        <span><b>Alt+1</b> Novo</span>
-                        <span><b>Alt+2</b> Aberto</span>
-                        <span><b>Alt+3</b> Aguardando</span>
-                        <span><b>Alt+4</b> Resolvido</span>
-                        <span><b>Ctrl+Enter</b> enviar</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
-                    <button
-                        wire:click="$set('filterStatus', 'new')"
-                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'new' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
-                    >
-                        <p class="text-[10px] text-gray-500">Fila Novo (Alt+1)</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['new'] ?? 0 }}</p>
-                    </button>
-                    <button
-                        wire:click="$set('filterStatus', 'open')"
-                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'open' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
-                    >
-                        <p class="text-[10px] text-gray-500">Fila Aberto (Alt+2)</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['open'] ?? 0 }}</p>
-                    </button>
-                    <button
-                        wire:click="$set('filterStatus', 'pending')"
-                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'pending' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
-                    >
-                        <p class="text-[10px] text-gray-500">Fila Aguardando (Alt+3)</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['pending'] ?? 0 }}</p>
-                    </button>
-                    <button
-                        wire:click="$set('filterStatus', 'resolved')"
-                        class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'resolved' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
-                    >
-                        <p class="text-[10px] text-gray-500">Fila Resolvido (Alt+4)</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['resolved'] ?? 0 }}</p>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
-                    <div class="rounded-lg bg-red-50 dark:bg-red-900/20 px-2 py-1.5 border border-red-100 dark:border-red-900/30">
-                        <p class="text-[10px] text-red-600 dark:text-red-300">SLA 1ª resposta (5 min)</p>
-                        <p class="text-sm font-semibold text-red-700 dark:text-red-200">{{ $this->slaStats['first_response_overdue'] ?? 0 }}</p>
-                    </div>
-                    <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 border border-amber-100 dark:border-amber-900/30">
-                        <p class="text-[10px] text-amber-700 dark:text-amber-300">SLA aguardando (30 min)</p>
-                        <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">{{ $this->slaStats['pending_overdue'] ?? 0 }}</p>
-                    </div>
-                </div>
-
-                {{-- Search --}}
-                <div class="relative mb-2.5">
-                    <x-heroicon-m-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        x-ref="searchInput"
-                        type="text"
-                        wire:model.live.debounce.300ms="searchQuery"
-                        placeholder="Buscar conversa..."
-                        class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                </div>
-
-                <div class="grid grid-cols-2 gap-1.5 mb-2.5">
-                    <div class="rounded-lg bg-gray-100 dark:bg-gray-700 px-2 py-1.5">
-                        <p class="text-[10px] text-gray-500">Ativas</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->inboxStats['active'] ?? 0 }}</p>
-                    </div>
-                    <div class="rounded-lg bg-gray-100 dark:bg-gray-700 px-2 py-1.5">
-                        <p class="text-[10px] text-gray-500">Não lidas</p>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->inboxStats['unread'] ?? 0 }}</p>
-                    </div>
-                </div>
-
-                {{-- Filter tabs --}}
-                <div class="flex gap-1">
-                    @foreach ([
-                        'active' => 'Ativas',
-                        'mine' => 'Minhas',
-                        'unassigned' => 'Sem agente',
-                        'resolved' => 'Resolvidas',
-                        'all' => 'Todas',
-                    ] as $val => $label)
-                        <button
-                            wire:click="$set('filterStatus', '{{ $val }}')"
-                            class="px-2.5 py-1 text-xs font-medium rounded-full transition-colors
-                                {{ $filterStatus === $val
-                                    ? 'bg-primary-500 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600' }}"
-                        >
-                            {{ $label }}
-                        </button>
-                    @endforeach
-                </div>
-
-                <div class="flex gap-1 mt-2">
-                    @foreach ([
-                        'all' => 'Omnichannel',
-                        'whatsapp' => 'WhatsApp',
-                        'instagram' => 'Instagram',
-                        'facebook' => 'Facebook',
-                    ] as $val => $label)
-                        <button
-                            wire:click="$set('filterChannel', '{{ $val }}')"
-                            class="px-2.5 py-1 text-[11px] font-medium rounded-full transition-colors
-                                {{ $filterChannel === $val
-                                    ? 'bg-emerald-500 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600' }}"
-                        >
-                            {{ $label }}
-                        </button>
-                    @endforeach
-                </div>
-
-                <div class="grid grid-cols-1 gap-1.5 mt-2.5">
-                    <select
-                        wire:model.live="filterAgent"
-                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1.5"
-                    >
-                        <option value="all">Todos os atendentes</option>
-                        <option value="me">Apenas minhas</option>
-                        <option value="unassigned">Sem agente</option>
-                        @foreach($this->agents as $agent)
-                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
-                        @endforeach
-                    </select>
-
-                    <select
-                        wire:model.live="filterWhatsAppChannel"
-                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1.5"
-                    >
-                        <option value="all">Todas instâncias WhatsApp</option>
-                        @foreach($this->whatsappChannels as $channel)
-                            <option value="{{ $channel->id }}">{{ $channel->name }}</option>
-                        @endforeach
-                    </select>
-
-                    <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <input type="checkbox" wire:model.live="filterUnreadOnly" class="rounded border-gray-300 dark:border-gray-600" />
-                        Mostrar apenas não lidas
-                    </label>
-                </div>
+                <button class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <x-heroicon-m-chat-bubble-left-right class="w-4 h-4" />
+                </button>
+                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                    <x-heroicon-m-user-group class="w-4 h-4" />
+                </button>
+                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                    <x-heroicon-m-calendar-days class="w-4 h-4" />
+                </button>
+                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition">
+                    <x-heroicon-m-megaphone class="w-4 h-4" />
+                </button>
+                <button class="w-9 h-9 rounded-xl hover:bg-white/20 flex items-center justify-center transition mt-auto">
+                    <x-heroicon-m-cog-6-tooth class="w-4 h-4" />
+                </button>
             </div>
 
+            <div class="flex-1 min-w-0 flex flex-col bg-gray-50 dark:bg-gray-900">
+                <div class="inbox-sticky-header px-3 py-2.5 border-b border-gray-200 dark:border-white/10 bg-white/95 dark:bg-gray-800/95 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-800 dark:text-white">Atendimento</h2>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $this->getConversations()->count() }} conversas</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button
+                                wire:click="toggleSortOrder"
+                                class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="{{ $sortOrder === 'recent' ? 'Mais recentes' : 'Mais antigas' }}"
+                            >
+                                <x-heroicon-m-arrows-up-down class="w-4 h-4" />
+                            </button>
+                            <button
+                                @click="shortcutsOpen = !shortcutsOpen"
+                                class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                            >
+                                <x-heroicon-m-command-line class="w-3 h-3" />
+                                Atalhos
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="shortcutsOpen" x-transition class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2.5 py-2 text-[11px] text-gray-600 dark:text-gray-300">
+                        <div class="flex flex-wrap gap-x-3 gap-y-1">
+                            <span><b>/</b> buscar</span>
+                            <span><b>Alt+1</b> Entrada</span>
+                            <span><b>Alt+2</b> Esperando</span>
+                            <span><b>Alt+3</b> Finalizados</span>
+                            <span><b>Ctrl+Enter</b> enviar</span>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <x-heroicon-m-magnifying-glass class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            x-ref="searchInput"
+                            type="text"
+                            wire:model.live.debounce.300ms="searchQuery"
+                            placeholder="Buscar por nome ou telefone"
+                            class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button
+                            wire:click="setQueue('entrada')"
+                            class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'entrada' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                        >
+                            <p class="text-[10px] text-gray-500">Entrada</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['entrada'] ?? 0 }}</p>
+                        </button>
+                        <button
+                            wire:click="setQueue('esperando')"
+                            class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'esperando' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                        >
+                            <p class="text-[10px] text-gray-500">Esperando</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['esperando'] ?? 0 }}</p>
+                        </button>
+                        <button
+                            wire:click="setQueue('finalizados')"
+                            class="rounded-lg px-2 py-1.5 text-left transition border {{ $filterStatus === 'finalizados' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40' }}"
+                        >
+                            <p class="text-[10px] text-gray-500">Finalizados</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $this->queueStats['finalizados'] ?? 0 }}</p>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5 text-xs">
+                        <select wire:model.live="filterSector" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Setor</option>
+                            @foreach($this->sectors as $sector)
+                                <option value="{{ $sector }}">{{ $sector }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="filterTag" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Etiqueta</option>
+                            @foreach($this->tags as $tag)
+                                <option value="{{ $tag }}">{{ $tag }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="filterAgent" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Atendente</option>
+                            <option value="me">Apenas minhas</option>
+                            <option value="unassigned">Sem agente</option>
+                            @foreach($this->agents as $agent)
+                                <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="filterChannel" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Canal</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                        </select>
+                        <select wire:model.live="filterPeriod" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Data</option>
+                            <option value="today">Hoje</option>
+                            <option value="7d">Ultimos 7 dias</option>
+                            <option value="30d">Ultimos 30 dias</option>
+                        </select>
+                        <select wire:model.live="filterWhatsAppChannel" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1.5">
+                            <option value="all">Instancia WA</option>
+                            @foreach($this->whatsappChannels as $channel)
+                                <option value="{{ $channel->id }}">{{ $channel->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2">
+                        <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            <input type="checkbox" wire:model.live="filterUnreadOnly" class="rounded border-gray-300 dark:border-gray-600" />
+                            Somente nao lidas
+                        </label>
+                        <button wire:click="clearMainFilters" class="text-xs text-primary-600 hover:text-primary-700 font-medium">Limpar filtros</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="rounded-lg bg-red-50 dark:bg-red-900/20 px-2 py-1.5 border border-red-100 dark:border-red-900/30">
+                            <p class="text-[10px] text-red-600 dark:text-red-300">SLA 1a resposta (5 min)</p>
+                            <p class="text-sm font-semibold text-red-700 dark:text-red-200">{{ $this->slaStats['first_response_overdue'] ?? 0 }}</p>
+                        </div>
+                        <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 border border-amber-100 dark:border-amber-900/30">
+                            <p class="text-[10px] text-amber-700 dark:text-amber-300">SLA aguardando (30 min)</p>
+                            <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">{{ $this->slaStats['pending_overdue'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                </div>
             {{-- Conversation list --}}
             <div class="flex-1 overflow-y-auto">
                 @forelse ($this->getConversations() as $conversation)
@@ -314,6 +300,16 @@
                                 </div>
                             </div>
 
+                            @if (!empty($conversation->contact->tags))
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    @foreach (collect($conversation->contact->tags)->take(2) as $tag)
+                                        <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-[10px] text-gray-600 dark:text-gray-300">
+                                            {{ $tag }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             {{-- Status + Agent --}}
                             <div class="flex items-center gap-2 mt-1">
                                 @php $badge = $conversation->status_badge; @endphp
@@ -343,7 +339,7 @@
             </div>
         </div>
 
-        {{-- ═══════ MAIN CHAT AREA ═══════ --}}
+        {{-- MAIN CHAT AREA --}}
         @if ($activeConversationId && $this->activeConversation)
             @php
                 $conv = $this->activeConversation;
@@ -367,6 +363,14 @@
                                 <span class="mx-1">&middot;</span>
                                 <span style="color: {{ $conv->channel->color }}">{{ $conv->channel->name }}</span>
                             </p>
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="px-2 py-0.5 rounded-md bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 text-[10px]">
+                                    Atendimento
+                                </span>
+                                <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-[10px]">
+                                    Geral
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -411,6 +415,15 @@
                             </div>
                         @endif
 
+                        <button
+                            wire:click="$toggle('isInternalNote')"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition {{ $isInternalNote ? 'bg-yellow-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600' }}"
+                            title="Atendimento privado / nota interna"
+                        >
+                            <x-heroicon-m-lock-closed class="w-3.5 h-3.5" />
+                            Privado
+                        </button>
+
                         @if (in_array($conv->status, ['new', 'open', 'pending']))
                             <button
                                 wire:click="resolveConversation"
@@ -434,7 +447,7 @@
                         <button
                             wire:click="toggleContactInfo"
                             class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                            title="Informações do contato"
+                            title="Informacoes do contato"
                         >
                             <x-heroicon-m-information-circle class="w-5 h-5" />
                         </button>
@@ -479,7 +492,7 @@
                                             <div class="flex items-center gap-1.5 mb-1">
                                                 <x-heroicon-m-lock-closed class="w-3 h-3 text-yellow-600" />
                                                 <span class="text-[10px] font-semibold text-yellow-700 dark:text-yellow-400">
-                                                    Nota interna — {{ $msg->user?->name ?? 'Sistema' }}
+                                                    Nota interna - {{ $msg->user?->name ?? 'Sistema' }}
                                                 </span>
                                             </div>
                                             <p class="text-xs text-yellow-800 dark:text-yellow-200">{{ $msg->body }}</p>
@@ -588,7 +601,7 @@
                             @if ($isInternalNote)
                                 <div class="flex items-center gap-2 mb-2 px-2 py-1 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 text-xs">
                                     <x-heroicon-m-lock-closed class="w-3.5 h-3.5" />
-                                    <span>Modo Nota Interna — Esta mensagem não será enviada ao cliente</span>
+                                    <span>Modo nota interna - esta mensagem nao sera enviada ao cliente</span>
                                     <button wire:click="$set('isInternalNote', false)" class="ml-auto font-bold hover:text-yellow-900">&times;</button>
                                 </div>
                             @endif
@@ -599,7 +612,7 @@
                                     <button
                                         wire:click="$toggle('showQuickReplies')"
                                         class="p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                                        title="Respostas rápidas"
+                                        title="Respostas rapidas"
                                     >
                                         <x-heroicon-m-bolt class="w-5 h-5" />
                                     </button>
@@ -644,13 +657,13 @@
                         </div>
                     </div>
 
-                    {{-- ═══════ RIGHT SIDEBAR — CONTACT INFO ═══════ --}}
+                    {{-- RIGHT SIDEBAR --}}
                     @if ($showContactInfo)
                         <div class="w-[280px] border-l border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 overflow-y-auto">
                             <div class="p-4">
                                 {{-- Close --}}
                                 <div class="flex items-center justify-between mb-4">
-                                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">Informações do Contato</h4>
+                                    <h4 class="font-semibold text-gray-900 dark:text-white text-sm">Informacoes do contato</h4>
                                     <button wire:click="toggleContactInfo" class="text-gray-400 hover:text-gray-600">
                                         <x-heroicon-m-x-mark class="w-5 h-5" />
                                     </button>
@@ -664,7 +677,7 @@
                                         class="w-20 h-20 rounded-full object-cover mb-3"
                                     />
                                     <h5 class="font-bold text-gray-900 dark:text-white">{{ $conv->contact->name }}</h5>
-                                    <p class="text-xs text-gray-500">{{ $conv->contact->source ?? 'Não informado' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $conv->contact->source ?? 'Nao informado' }}</p>
                                 </div>
 
                                 {{-- Contact details --}}
@@ -722,7 +735,7 @@
                                     </div>
                                     @if ($conv->first_response_at)
                                         <div class="flex justify-between">
-                                            <span class="text-gray-500">1ª resposta</span>
+                                            <span class="text-gray-500">1a resposta</span>
                                             <span class="text-gray-700 dark:text-gray-300">{{ $conv->first_response_at->format('d/m/Y H:i') }}</span>
                                         </div>
                                     @endif
@@ -742,10 +755,29 @@
                                     </div>
                                 @endif
 
-                                {{-- Related leads --}}
-                                @php $leads = $conv->contact->leads()->latest()->limit(3)->get(); @endphp
+                                {{-- CRM snapshot --}}
+                                @php
+                                    $leads = $conv->contact->leads()->latest()->limit(3)->get();
+                                    $latestLead = $leads->first();
+                                @endphp
+                                <hr class="my-4 border-gray-200 dark:border-gray-700" />
+                                <h5 class="font-semibold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide mb-2">CRM / Funil</h5>
+                                @if ($latestLead)
+                                    <div class="p-2.5 rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/60 dark:bg-indigo-900/10 mb-2">
+                                        <p class="text-[10px] text-indigo-600 dark:text-indigo-300 uppercase tracking-wide">Oportunidade principal</p>
+                                        <p class="text-xs font-semibold text-gray-900 dark:text-white mt-1">{{ $latestLead->title }}</p>
+                                        <div class="flex items-center justify-between mt-2">
+                                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-300">
+                                                {{ $latestLead->stage }}
+                                            </span>
+                                            @if ($latestLead->estimated_value)
+                                                <span class="text-[10px] font-medium text-gray-700 dark:text-gray-200">R$ {{ number_format($latestLead->estimated_value, 0, ',', '.') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
                                 @if ($leads->count() > 0)
-                                    <h5 class="font-semibold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide mb-2">Leads Recentes</h5>
                                     <div class="space-y-2">
                                         @foreach ($leads as $lead)
                                             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-700">
@@ -759,12 +791,14 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                @else
+                                    <p class="text-xs text-gray-500">Sem oportunidades no CRM para este contato.</p>
                                 @endif
 
                                 {{-- Notes --}}
                                 @if ($conv->contact->notes)
                                     <hr class="my-4 border-gray-200 dark:border-gray-700" />
-                                    <h5 class="font-semibold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide mb-2">Observações</h5>
+                                    <h5 class="font-semibold text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide mb-2">Observacoes</h5>
                                     <p class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ $conv->contact->notes }}</p>
                                 @endif
                             </div>
@@ -785,10 +819,11 @@
                     </svg>
                     <h3 class="text-xl font-semibold text-gray-500 dark:text-gray-400 mb-2">Elite Atendimento</h3>
                     <p class="text-sm text-gray-400 dark:text-gray-500 max-w-sm">
-                        Selecione uma conversa para iniciar o atendimento. Use os filtros à esquerda para organizar suas conversas.
+                        Selecione uma conversa para iniciar o atendimento. Use os filtros a esquerda para organizar suas conversas.
                     </p>
                 </div>
             </div>
         @endif
     </div>
 </x-filament-panels::page>
+

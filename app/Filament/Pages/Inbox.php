@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Channel;
+use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\QuickReply;
@@ -43,10 +44,14 @@ class Inbox extends Page
     public ?int $activeConversationId = null;
     public string $messageText = '';
     public string $searchQuery = '';
-    public string $filterStatus = 'active'; // active, mine, unassigned, all
+    public string $filterStatus = 'entrada'; // entrada, esperando, finalizados, all
     public string $filterChannel = 'all'; // all, whatsapp, instagram, facebook
     public string $filterAgent = 'all'; // all, me, unassigned, {id}
     public string $filterWhatsAppChannel = 'all'; // all, {channel_id}
+    public string $filterSector = 'all'; // all, {source}
+    public string $filterTag = 'all'; // all, {tag}
+    public string $filterPeriod = 'all'; // all, today, 7d, 30d
+    public string $sortOrder = 'recent'; // recent, oldest
     public bool $filterUnreadOnly = false;
     public bool $showQuickReplies = false;
     public bool $showContactInfo = false;
@@ -71,6 +76,9 @@ class Inbox extends Page
 
         // Filters
         match ($this->filterStatus) {
+            'entrada' => $query->whereIn('status', ['new', 'open']),
+            'esperando' => $query->where('status', 'pending'),
+            'finalizados' => $query->where('status', 'resolved'),
             'active' => $query->whereIn('status', ['new', 'open', 'pending']),
             'mine' => $query->where('assigned_to', Auth::id())->whereIn('status', ['new', 'open', 'pending']),
             'unassigned' => $query->whereNull('assigned_to')->whereIn('status', ['new', 'open', 'pending']),
@@ -119,7 +127,38 @@ class Inbox extends Page
             $query->where('unread_count', '>', 0);
         }
 
-        return $query->orderByDesc('last_message_at')->limit(100)->get();
+        if ($this->filterSector !== 'all') {
+            $query->whereHas('contact', fn ($q) => $q->where('source', $this->filterSector));
+        }
+
+        if ($this->filterTag !== 'all') {
+            $query->whereHas('contact', fn ($q) => $q->whereJsonContains('tags', $this->filterTag));
+        }
+
+        $periodStart = match ($this->filterPeriod) {
+            'today' => now()->startOfDay(),
+            '7d' => now()->subDays(7),
+            '30d' => now()->subDays(30),
+            default => null,
+        };
+
+        if ($periodStart) {
+            $query->where(function ($q) use ($periodStart) {
+                $q->where('last_message_at', '>=', $periodStart)
+                    ->orWhere(function ($q2) use ($periodStart) {
+                        $q2->whereNull('last_message_at')
+                            ->where('created_at', '>=', $periodStart);
+                    });
+            });
+        }
+
+        if ($this->sortOrder === 'oldest') {
+            $query->orderBy('last_message_at')->orderBy('id');
+        } else {
+            $query->orderByDesc('last_message_at')->orderByDesc('id');
+        }
+
+        return $query->limit(100)->get();
     }
 
     #[Computed]
@@ -148,6 +187,38 @@ class Inbox extends Page
     }
 
     #[Computed]
+    public function sectors(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return Contact::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereNotNull('source')
+            ->where('source', '!=', '')
+            ->select('source')
+            ->distinct()
+            ->orderBy('source')
+            ->pluck('source');
+    }
+
+    #[Computed]
+    public function tags(): Collection
+    {
+        $tenant = filament()->getTenant();
+
+        return Contact::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereNotNull('tags')
+            ->pluck('tags')
+            ->flatten()
+            ->filter(fn ($tag) => filled($tag))
+            ->map(fn ($tag) => (string) $tag)
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    #[Computed]
     public function inboxStats(): array
     {
         $tenant = filament()->getTenant();
@@ -170,10 +241,9 @@ class Inbox extends Page
         $base = Conversation::query()->where('tenant_id', $tenant->id);
 
         return [
-            'new' => (clone $base)->where('status', 'new')->count(),
-            'open' => (clone $base)->where('status', 'open')->count(),
-            'pending' => (clone $base)->where('status', 'pending')->count(),
-            'resolved' => (clone $base)->where('status', 'resolved')->count(),
+            'entrada' => (clone $base)->whereIn('status', ['new', 'open'])->count(),
+            'esperando' => (clone $base)->where('status', 'pending')->count(),
+            'finalizados' => (clone $base)->where('status', 'resolved')->count(),
         ];
     }
 
@@ -236,6 +306,31 @@ class Inbox extends Page
     }
 
     /* ── Actions ── */
+
+    public function setQueue(string $queue): void
+    {
+        if (!in_array($queue, ['entrada', 'esperando', 'finalizados', 'all'], true)) {
+            return;
+        }
+
+        $this->filterStatus = $queue;
+    }
+
+    public function toggleSortOrder(): void
+    {
+        $this->sortOrder = $this->sortOrder === 'recent' ? 'oldest' : 'recent';
+    }
+
+    public function clearMainFilters(): void
+    {
+        $this->filterSector = 'all';
+        $this->filterTag = 'all';
+        $this->filterAgent = 'all';
+        $this->filterChannel = 'all';
+        $this->filterPeriod = 'all';
+        $this->filterWhatsAppChannel = 'all';
+        $this->filterUnreadOnly = false;
+    }
 
     public function selectConversation(int $id): void
     {
