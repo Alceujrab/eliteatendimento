@@ -38,6 +38,7 @@ class AdminPanelProvider extends PanelProvider
                 }
             })
             ->login()
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandName('Elite Atendimento')
             ->favicon(asset('favicon.ico'))
             ->tenant(Tenant::class, ownershipRelationship: 'tenant', slugAttribute: 'slug')
