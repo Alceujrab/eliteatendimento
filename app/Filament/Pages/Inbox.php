@@ -23,8 +23,8 @@ class Inbox extends Page
     protected string $view = 'filament.pages.inbox';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
-    protected static ?string $navigationLabel = 'Caixa de Entrada';
-    protected static ?string $title = 'Caixa de Entrada';
+    protected static ?string $navigationLabel = 'Sala de Chat';
+    protected static ?string $title = 'Sala de Chat';
     protected static string | \UnitEnum | null $navigationGroup = 'Atendimento';
     protected static ?int $navigationSort = -1;
 

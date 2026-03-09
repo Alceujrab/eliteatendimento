@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Inbox;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -29,6 +30,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->homeUrl(function (): string {
+                try {
+                    return Inbox::getUrl();
+                } catch (\Throwable) {
+                    return '/admin';
+                }
+            })
             ->login()
             ->brandName('Elite Atendimento')
             ->favicon(asset('favicon.ico'))
